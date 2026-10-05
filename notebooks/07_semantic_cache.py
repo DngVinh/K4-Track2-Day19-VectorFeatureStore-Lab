@@ -100,11 +100,25 @@ for g in cold:
 
 print(f"cache: {len(warm)} câu   probe: {len(positives)} positive / {len(negatives)} negative\n")
 print(f"{'ngưỡng':>8}{'tiết kiệm':>12}{'trả lời sai':>14}   {'':<4}")
+sweep_rows = []
 for th in (0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95):
     saved = sum(1 for sc, ok in positives if sc >= th and ok) / len(positives)
     wrong = sum(1 for sc in negatives if sc >= th) / len(negatives)
+    wrong_positive = sum(1 for sc, ok in positives if sc >= th and not ok) / len(positives)
+    sweep_rows.append((th, saved, wrong, wrong_positive))
     flag = "NGUY HIỂM" if wrong > 0.20 else ("quá chặt" if saved < 0.80 else "cân bằng")
     print(f"{th:>8.2f}{saved:>12.0%}{wrong:>14.0%}   {flag}")
+acceptable = [row for row in sweep_rows if row[2] <= 0.05 and row[3] <= 0.05]
+if acceptable:
+    chosen = max(acceptable, key=lambda row: (row[1], -row[0]))
+    print(f"Selected threshold on this calibration set: {chosen[0]:.2f}; "
+          f"correct reuse={chosen[1]:.1%}, cold false hits={chosen[2]:.1%}, "
+          f"positive wrong-answer hits={chosen[3]:.1%}")
+else:
+    print("No candidate meets the 5% false-hit budget; disable semantic reuse until recalibrated")
+at_75 = next(row for row in sweep_rows if row[0] == 0.75)
+print(f"At 0.75: cold false-hit rate={at_75[2]:.1%}. A threshold copied from another "
+      "benchmark cannot guarantee correctness on this query distribution.")
 
 # %% [markdown]
 # **Đọc bảng này thật kỹ.** Ngưỡng 0,75 — con số AWS công bố — trên corpus *này*
@@ -131,6 +145,7 @@ for jump in (0, 600, 3600):
     print(f"t = {ttl_cache._clock:>6.0f}s  → {'HIT' if hit else 'MISS (hết hạn)'}")
 
 print(f"\nstale evictions: {ttl_cache.stats.stale_evictions}")
+assert hit is None and ttl_cache.stats.stale_evictions >= 1
 
 # %% [markdown]
 # Câu hỏi nhạy thời gian ("giá hiện tại", "còn hàng không", "trạng thái đơn hàng")
@@ -158,6 +173,9 @@ safe = SemanticCache(client=client, embedder=embedder, threshold=0.70,
 safe.put("acme", "doanh thu quý 3 của chúng tôi", "Doanh thu ACME quý 3: 4,2 tỷ VND.")
 blocked = safe.get("globex", "doanh thu quý 3 của chúng tôi")
 print("\nnamespaced=True  → GLOBEX nhận được:", blocked.answer if blocked else "MISS (đúng)")
+assert stolen is not None and stolen.tenant == "acme"
+assert blocked is None
+print("PASS — tenant leak demonstrated and blocked by namespace; TTL expiry verified")
 
 # %% [markdown]
 # Không có exception, không có stack trace, không có dòng log đỏ. Chỉ là một

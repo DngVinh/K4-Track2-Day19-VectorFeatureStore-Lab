@@ -1,0 +1,10 @@
+{
+  "tool": "mcp__cua_repl",
+  "inventory_call": "await cua.getState();",
+  "inventory": {"apps": [], "browsers": []},
+  "creation_call": "cua.createBrowserTab('iab', 'about:blank', {visible: true})",
+  "creation_result": "Browser is not available: iab",
+  "native_computer_apis": "disabled by tool configuration",
+  "literal_screenshots_created": 0,
+  "safety_controls_changed": false
+}

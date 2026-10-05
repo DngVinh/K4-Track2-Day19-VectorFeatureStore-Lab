@@ -1,0 +1,92 @@
+{'ready': True, 'n_docs': 1000}
+
+C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T040443Z_reproduction_7d5aac\.venv\Lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+
+{
+  "query": "cloud computing tự động mở rộng",
+  "mode": "hybrid",
+  "top_k": 10,
+  "latency_ms": 15.18249999935506,
+  "hits": [
+    {
+      "doc_id": "cloud_016",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, serverless, AWS. Khái niệm hạ tầng và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và AWS.",
+      "score": 0.03252247488101534
+    },
+    {
+      "doc_id": "cloud_072",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, Azure, Kubernetes. Khái niệm triển khai và đám mây là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và Kubernetes.",
+      "score": 0.032266458495966696
+    },
+    {
+      "doc_id": "cloud_053",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Để tối ưu chi phí, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm AWS, auto-scaling, cloud. Khái niệm tự động mở rộng và triển khai là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với AWS và cloud.",
+      "score": 0.0315136476426799
+    },
+    {
+      "doc_id": "cloud_029",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Tại các doanh nghiệp công nghệ Việt Nam, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, Lambda, serverless. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và serverless.",
+      "score": 0.030776515151515152
+    },
+    {
+      "doc_id": "cloud_040",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm multi-tenant, Kubernetes, AWS. Khái niệm đám mây và triển khai là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với multi-tenant và AWS.",
+      "score": 0.029910714285714284
+    },
+    {
+      "doc_id": "cloud_045",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Để tối ưu chi phí, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm Kubernetes, serverless, auto-scaling. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với Kubernetes và auto-scaling.",
+      "score": 0.02919863597612958
+    },
+    {
+      "doc_id": "cloud_087",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm serverless, container, AWS. Khái niệm đa người dùng và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với serverless và AWS.",
+      "score": 0.026709401709401708
+    },
+    {
+      "doc_id": "cloud_000",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, GCP, Azure. Khái niệm không máy chủ và hạ tầng là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và Azure.",
+      "score": 0.02607709750566893
+    },
+    {
+      "doc_id": "cloud_091",
+      "title": "Điện toán đám mây: tự động mở rộng theo lưu lượng",
+      "text": "Khi triển khai ở quy mô lớn, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm Azure, multi-tenant, cloud. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với Azure và cloud.",
+      "score": 0.026013513513513515
+    },
+    {
+      "doc_id": "cloud_039",
+      "title": "Điện toán đám mây: tách biệt môi trường dev và prod",
+      "text": "Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tách biệt môi trường dev và prod. Các công cụ phổ biến gồm cloud, auto-scaling, multi-tenant. Khái niệm hạ tầng và tự động mở rộng là nền tảng quan trọng. Bài viết này giải thích cách tách biệt môi trường dev và prod một cách thực tế, kèm ví dụ minh hoạ với cloud và multi-tenant.",
+      "score": 0.024695121951219513
+    }
+  ]
+}
+latency_ms: 15.2
+top-3 hits:
+       cloud_016  score=0.0325  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_072  score=0.0323  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_053  score=0.0315  Điện toán đám mây: tự động mở rộng theo lưu lượng
+
+Warmup completed: 10 requests per mode (excluded from measurements)
+  mode            P50      P95      P99  P99(wall)
+
+  keyword       1.4ms    2.5ms    2.9ms      5.2ms
+
+  semantic     13.5ms   17.9ms   19.3ms     21.2ms
+
+  hybrid       15.9ms   21.4ms   27.1ms     29.0ms
+
+Hybrid P99 server-side: 27.1ms
+PASS — hybrid P99 < 50ms (27.1ms)
+
+API server stopped

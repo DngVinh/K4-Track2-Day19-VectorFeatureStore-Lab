@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><title>Lab 19 screenshot evidence</title><style>body{font:16px Arial;margin:24px}pre{white-space:pre-wrap;font:16px/1.5 Consolas}section{border:1px solid #ccc;padding:18px;margin:18px 0}</style><h1>04_feast_feature_store</h1><p>Final executed output excerpts. Rendered evidence accepted by the user as submission screenshots.</p><section><h2>Output [2]</h2><pre>Wrote 3 Parquet sources to C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T040443Z_reproduction_7d5aac\app\feast_repo\data
+  item_popularity.parquet  12.0 KB
+  query_velocity.parquet  2.3 KB
+  user_profile.parquet  2.7 KB</pre></section><section><h2>Output [3]</h2><pre>STDOUT:
+No project found in the repository. Using project name lab19 defined in feature_store.yaml
+Applying changes for project lab19
+Created project lab19
+Created entity item
+Created entity user
+Created feature view user_profile_features
+Created feature view item_popularity_features
+Created feature view query_velocity_features
+
+Created sqlite table lab19_item_popularity_features
+Created sqlite table lab19_query_velocity_features
+Created sqlite table lab19_user_profile_features
+
+
+
+NAME                      ENTITIES    TYPE         ENABLED    STATE
+user_profile_features     {&#x27;user&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+item_popularity_features  {&#x27;item&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+query_velocity_features   {&#x27;user&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+</pre></section><section><h2>Output [4]</h2><pre>Materializing 3 feature views to 2026-10-05 04:14:41+00:00 into the sqlite online store.
+
+user_profile_features from 2026-09-05 04:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+item_popularity_features from 2026-10-04 04:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+query_velocity_features from 2026-10-05 03:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+</pre></section><section><h2>Output [5]</h2><pre>Single lookup: 70.15ms
+{&#x27;user_id&#x27;: &#x27;u_001&#x27;, &#x27;reading_speed_wpm&#x27;: 187, &#x27;preferred_language&#x27;: &#x27;vi&#x27;, &#x27;topic_affinity&#x27;: &#x27;cloud&#x27;, &#x27;queries_last_hour&#x27;: 11, &#x27;distinct_topics_24h&#x27;: 4}
+Materialized online entity counts (verified by actual Feast lookups):
+  user_profile_features: 100 entities
+  item_popularity_features: 1000 entities
+  query_velocity_features: 100 entities</pre></section><section><h2>Output [6]</h2><pre>Online lookup latency over 100 calls:
+  P50 = 0.42ms
+  P95 = 0.54ms
+  P99 = 0.65ms
+PASS — online lookup P99 &lt; 10ms (0.65ms)</pre></section><section><h2>Output [7]</h2><pre>  user_id           event_timestamp  reading_speed_wpm topic_affinity
+0   u_001 2026-10-05 02:14:41+00:00                177          cloud
+1   u_002 2026-10-05 03:14:41+00:00                184       security
+2   u_003 2026-10-05 04:14:41+00:00                201       database
+PASS — PIT values match the latest snapshot at or before each event; future values excluded</pre></section>

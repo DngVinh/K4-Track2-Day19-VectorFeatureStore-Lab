@@ -1,0 +1,25 @@
+<!doctype html><meta charset='utf-8'><style>body{font-family:Arial;background:#f5f7fa;color:#142033;padding:28px;margin:0}h1{font-size:28px;margin:0 0 12px}h2{font-size:15px;color:#526174;margin:0 0 10px}section{background:white;border:1px solid #dde3ec;border-radius:8px;padding:18px;margin:14px 0}pre{font:16px/1.55 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}p{font-size:14px}</style><h1>Lab 19 · 02_hybrid_search_rrf</h1><p>Actual executed notebook outputs · Lite / Python 3.14 · Saved output evidence; complete outputs are retained in the notebook.</p><section><h2>Output [2]</h2><pre>BM25 + vector indices ready (1000 docs)</pre></section><section><h2>Output [4]</h2><pre>Query: co giãn linh hoạt theo nhu cầu sử dụng
+  keyword top-3:  [&#x27;mobile_082&#x27;, &#x27;mobile_093&#x27;, &#x27;mobile_092&#x27;]
+  semantic top-3: [&#x27;ai_ml_048&#x27;, &#x27;cloud_053&#x27;, &#x27;ai_ml_025&#x27;]
+  hybrid top-3:   [&#x27;cloud_016&#x27;, &#x27;mobile_082&#x27;, &#x27;ai_ml_048&#x27;]</pre></section><section><h2>Output [5]</h2><pre>Precision@10 (avg over 50 queries):
+  Keyword (BM25)   : 77.8%
+  Semantic (vector): 73.2%
+  Hybrid  (RRF=60) : 78.6%   &lt;- should win</pre></section><section><h2>Output [6]</h2><pre>  type           n       kw     sem     hyb
+  exact         15   96.7%  88.7%  96.7%
+  paraphrase    15   33.3%  24.0%  32.0%
+  mixed         20   97.0%  98.5% 100.0%
+PASS — hybrid beats both baselines overall; mixed-slice comparison verified</pre></section><section><h2>Output [7]</h2><pre>Multilingual experiment: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+Same 1000 documents / 50 queries / BM25 / RRF k=60 / top-50 / Precision@10
+Overall: keyword=77.8%, semantic=75.8%, hybrid=80.6%
+  type           n      kw     sem     hyb
+  exact         15  96.7%  90.0%  98.0%
+  paraphrase    15  33.3%  48.0%  44.0%
+  mixed         20  97.0%  86.0%  95.0%
+PASS — multilingual vector wins paraphrase; hybrid beats both baselines overall at unchanged RRF settings
+Tradeoff on mixed: multilingual hybrid=95.0%, BM25=97.0%; BGE-small hybrid above achieved 100.0%.
+Model choice changes the slice winners. Keep both measured tables; do not assume a universal winner.</pre></section><section><h2>Output [8]</h2><pre>Fixed 50/50 BGE + multilingual vector ensemble (768 dimensions; not the Lite API backend)
+Overall: keyword=77.8%, semantic=78.0%, hybrid=81.2%
+  exact         15  96.7%  93.3%  98.0%
+  paraphrase    15  33.3%  49.3%  44.7%
+  mixed         20  97.0%  88.0%  96.0%
+Measured tradeoff: twice the document vector storage and two query embeddings; API latency above uses BGE only.</pre></section>

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "--noprofile",
+    "--norc",
+    "-c",
+    "make verify-lite"
+  ],
+  "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+  "started_utc": "2026-10-05T03:18:18.049039+00:00",
+  "finished_utc": "2026-10-05T03:18:18.458641+00:00",
+  "exit_code": 2,
+  "stdout": "make_verify_lite.stdout.txt",
+  "stderr": "make_verify_lite.stderr.txt"
+}

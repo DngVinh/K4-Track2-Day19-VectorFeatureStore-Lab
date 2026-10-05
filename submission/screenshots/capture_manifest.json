@@ -1,0 +1,50 @@
+[
+  {
+    "notebook": "notebooks\\01_embeddings_index.ipynb",
+    "source_sha256": "667747ebafbc6b3727292d4d6977a50432f7f43050b1ed140c2cb51c2ca6323b",
+    "png": "submission\\screenshots\\nb1_indexed_1000.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\02_hybrid_search_rrf.ipynb",
+    "source_sha256": "0b5b806a7d9c83754c0ad574ba04ddb93084b7e459b7911e7640420c3b6d62a6",
+    "png": "submission\\screenshots\\nb2_precision_table.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\03_search_api_benchmark.ipynb",
+    "source_sha256": "cef35233a8c45ab0a61268b8a077fd678c945cadc8c56a2b879e6a4e678b4623",
+    "png": "submission\\screenshots\\nb3_latency_p99.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\04_feast_feature_store.ipynb",
+    "source_sha256": "73a0824c732971f5d08a2a8cc3faf00ee75803f072fb610ebad45677c709ed43",
+    "png": "submission\\screenshots\\nb4_feast_materialize.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\05_filtered_search.ipynb",
+    "source_sha256": "76438718a63eedecda674c290b2104498e3dfcc218642eb2cf43d536eff38dc8",
+    "png": "submission\\screenshots\\nb5_filtered_search.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\06_agent_retrieval.ipynb",
+    "source_sha256": "53be5007dad3253cf35c39990a018c2d9049032a32c533a101228a2766246187",
+    "png": "submission\\screenshots\\nb6_agent_retrieval.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\07_semantic_cache.ipynb",
+    "source_sha256": "2d6874efe32e4009ef94dd066bdc70deeaca0c7da0e3b5fc9c10ee543e50e0ff",
+    "png": "submission\\screenshots\\nb7_semantic_cache.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  },
+  {
+    "notebook": "notebooks\\08_feature_engineering.ipynb",
+    "source_sha256": "84abd5f73bb31bf3ccc4bd0d341dea224604a818a68352eced31752d231224fd",
+    "png": "submission\\screenshots\\nb8_feature_engineering.png",
+    "renderer": "Pillow: direct rendering of actual notebook outputs; not a browser screenshot"
+  }
+]

@@ -87,6 +87,9 @@ for name, pred, qf in cases:
     rows.append((name, sel, post.recall_against(truth), fann_r))
     print(f"{name:<18}{sel:7.1f}{post.recall_against(truth):8.2f}{fann_r:8.2f}"
           f"{post.latency_ms:9.1f}{fann_ms:9.1f}")
+assert all(row[3] == 1.0 for row in rows)
+assert rows[-1][2] < rows[0][2]
+print("PASS — filtered retrieval preserves exact recall; selective post-filter loses recall")
 
 # %% [markdown]
 # **Đọc bảng:** filter càng chặt (`sel%` càng nhỏ), post-filter càng sập. Ở

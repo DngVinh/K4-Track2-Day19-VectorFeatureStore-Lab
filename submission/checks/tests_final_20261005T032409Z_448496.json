@@ -1,0 +1,11 @@
+{
+  "command": [
+    "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.venv\\Scripts\\python.exe",
+    "-m",
+    "pytest",
+    "-q"
+  ],
+  "started_utc": "2026-10-05T03:24:09.483443+00:00",
+  "finished_utc": "2026-10-05T03:24:18.517147+00:00",
+  "exit_code": 0
+}

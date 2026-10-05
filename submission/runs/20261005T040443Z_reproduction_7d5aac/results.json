@@ -1,0 +1,104 @@
+[
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "bash --version; make --version; python --version; uv --version"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:04:43.741359+00:00",
+    "finished_utc": "2026-10-05T04:04:43.940751+00:00",
+    "exit_code": 0,
+    "stdout": "tools.stdout.txt",
+    "stderr": "tools.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "bash setup-lite.sh && make benchmark"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:04:43.943364+00:00",
+    "finished_utc": "2026-10-05T04:12:14.581523+00:00",
+    "exit_code": 0,
+    "stdout": "setup_benchmark.stdout.txt",
+    "stderr": "setup_benchmark.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "make test"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:12:14.583338+00:00",
+    "finished_utc": "2026-10-05T04:12:26.600066+00:00",
+    "exit_code": 0,
+    "stdout": "make_test.stdout.txt",
+    "stderr": "make_test.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "make verify-lite"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:12:26.601695+00:00",
+    "finished_utc": "2026-10-05T04:12:32.618938+00:00",
+    "exit_code": 0,
+    "stdout": "make_verify_lite.stdout.txt",
+    "stderr": "make_verify_lite.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac\\.venv\\Scripts\\python.exe",
+      "-c",
+      "import sys,platform,importlib.metadata as m,json; print(json.dumps({'python':sys.version,'platform':platform.platform(),'packages':{p:m.version(p) for p in ('fastembed','qdrant-client','feast','dill','pyarrow','numpy','pytest','jupytext')}},indent=2))"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:12:32.620588+00:00",
+    "finished_utc": "2026-10-05T04:12:32.816989+00:00",
+    "exit_code": 0,
+    "stdout": "environment.stdout.txt",
+    "stderr": "environment.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac\\.venv\\Scripts\\python.exe",
+      "scripts/run_notebooks.py",
+      "03",
+      "04",
+      "05",
+      "06",
+      "08"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:12:32.824121+00:00",
+    "finished_utc": "2026-10-05T04:19:18.552302+00:00",
+    "exit_code": 0,
+    "stdout": "notebooks.stdout.txt",
+    "stderr": "notebooks.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac\\.venv\\Scripts\\python.exe",
+      "bonus/demo.py"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+    "started_utc": "2026-10-05T04:19:18.554132+00:00",
+    "finished_utc": "2026-10-05T04:19:24.894027+00:00",
+    "exit_code": 0,
+    "stdout": "bonus.stdout.txt",
+    "stderr": "bonus.stderr.txt"
+  }
+]

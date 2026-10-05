@@ -1,0 +1,40 @@
+C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.venv\Lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+
+BM25 + vector indices ready (1000 docs)
+
+Query: co giãn linh hoạt theo nhu cầu sử dụng
+  keyword top-3:  ['mobile_082', 'mobile_093', 'mobile_092']
+  semantic top-3: ['ai_ml_048', 'cloud_053', 'ai_ml_025']
+  hybrid top-3:   ['cloud_016', 'mobile_082', 'ai_ml_048']
+
+Precision@10 (avg over 50 queries):
+  Keyword (BM25)   : 77.8%
+  Semantic (vector): 73.2%
+  Hybrid  (RRF=60) : 78.6%   <- should win
+
+  type           n       kw     sem     hyb
+  exact         15   96.7%  88.7%  96.7%
+  paraphrase    15   33.3%  24.0%  32.0%
+  mixed         20   97.0%  98.5% 100.0%
+PASS — hybrid beats both baselines overall; mixed-slice comparison verified
+
+Multilingual experiment: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+Same 1000 documents / 50 queries / BM25 / RRF k=60 / top-50 / Precision@10
+Overall: keyword=77.8%, semantic=75.8%, hybrid=80.6%
+  type           n      kw     sem     hyb
+  exact         15  96.7%  90.0%  98.0%
+  paraphrase    15  33.3%  48.0%  44.0%
+  mixed         20  97.0%  86.0%  95.0%
+
+[31m---------------------------------------------------------------------------[39m
+[31mAssertionError[39m                            Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[7][39m[32m, line 40[39m
+[32m     36[39m     print(f"  {kind:12} {len(subset):>3} {values[[32m0[39m]:>6.1%} {values[[32m1[39m]:>6.1%} {values[[32m2[39m]:>6.1%}")
+[32m     37[39m [38;5;28;01massert[39;00m multi_slices[[33m"paraphrase"[39m][[32m1[39m] > multi_slices[[33m"paraphrase"[39m][[32m0[39m]
+[32m     38[39m [38;5;28;01massert[39;00m statistics.mean(multi_hyb) > statistics.mean(p_kw)
+[32m     39[39m [38;5;28;01massert[39;00m statistics.mean(multi_hyb) > statistics.mean(multi_sem)
+[32m---> [39m[32m40[39m [38;5;28;01massert[39;00m multi_slices[[33m"mixed"[39m][[32m2[39m] >= max(multi_slices[[33m"mixed"[39m][:[32m2[39m])
+[32m     41[39m print([33m"PASS — multilingual vector wins paraphrase; hybrid wins overall and mixed at unchanged RRF settings"[39m)
+
+[31mAssertionError[39m: 

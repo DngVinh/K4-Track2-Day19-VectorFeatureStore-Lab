@@ -100,10 +100,13 @@ class Searcher:
         else:
             self.client = QdrantClient(":memory:")
 
-        # Recreate is OK in lite mode (it's in-memory); for server, only create if missing.
+        # Never destroy an existing server collection during application startup.
         existing = {c.name for c in self.client.get_collections().collections}
         if COLLECTION in existing and mode == "server":
-            self.client.delete_collection(COLLECTION)
+            raise RuntimeError(
+                f"Collection {COLLECTION!r} already exists. Use an isolated Qdrant "
+                "instance for this lab; existing server data is preserved."
+            )
         self.client.create_collection(
             collection_name=COLLECTION,
             # dimension must follow the chosen model, not a module constant --

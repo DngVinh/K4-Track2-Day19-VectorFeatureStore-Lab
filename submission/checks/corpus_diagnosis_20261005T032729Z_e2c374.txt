@@ -1,0 +1,12 @@
+BGE revision aa8f8b060edb00e03bfdd08813a2949946c8ba55
+Documents: count/min/median/max tokens 1000 111 135.0 159
+Documents exceeding 512 tokens: 0
+Unknown tokens in documents: 0 of 134571
+Unknown tokens in queries: 0 of 643
+Corpus topic counts {'frontend': 100, 'backend': 100, 'networking': 100, 'mobile': 100, 'ai_ml': 100, 'devops': 100, 'data_eng': 100, 'security': 100, 'database': 100, 'cloud': 100}
+Duplicate title+text: 0
+All query relevance sets exactly equal their 100-doc topic: True
+P10 uses fixed denominator 10. Query mode labels only describe evaluation slices.
+No file, corpus, query, model, ranking or ground truth is modified.
+
+STDERR:

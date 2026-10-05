@@ -28,6 +28,8 @@
 # %%
 import _setup  # noqa: F401
 import subprocess
+import sys
+from datetime import datetime, timezone
 import warnings
 from pathlib import Path
 
@@ -69,6 +71,26 @@ feat = window_aggregates(events)
 cols = ["searches_1h", "searches_24h", "searches_7d",
         "query_len_vs_user_avg", "query_len_delta", "seconds_since_last"]
 print(feat[cols].describe().loc[["mean", "50%", "max"]].round(2).to_string())
+
+# %% [markdown]
+# ### Họ 6 — embedding làm feature
+#
+# Vector là một feature đa chiều; similarity với một prototype là feature
+# số có thể đưa vào mô hình xếp hạng. Đây là demo biểu diễn, không dùng nhãn
+# click để chọn prototype và không tuyên bố similarity là xác suất click.
+
+# %%
+from app.embeddings import Embedder
+feature_embedder = Embedder("fastembed")
+texts = ["Kubernetes autoscaling cloud", "OAuth TLS security", "PostgreSQL database"]
+embedding_features = np.asarray(list(feature_embedder.embed(texts)))
+prototype = next(feature_embedder.embed(["cloud computing infrastructure"]))
+cosine_features = (embedding_features @ prototype) / (
+    np.linalg.norm(embedding_features, axis=1) * np.linalg.norm(prototype))
+print("Embedding feature matrix:", embedding_features.shape)
+for text, vector, cosine in zip(texts, embedding_features, cosine_features):
+    print(f"{text}: norm={np.linalg.norm(vector):.3f}, cloud_similarity={cosine:.3f}, first4={vector[:4].tolist()}")
+assert embedding_features.shape == (3, 384)
 
 # %% [markdown]
 # ## 3. Feature trung thực trông như thế nào?
@@ -158,10 +180,11 @@ print(f"\n'lift ảo' sẽ mất khi lên production: {auc_lat - auc_pit:+.3f} A
 
 # %%
 repo = ROOT / "app" / "feast_repo_ondemand"
-subprocess.run(["python", str(ROOT / "scripts" / "gen_spend.py")], check=True,
+subprocess.run([sys.executable, str(ROOT / "scripts" / "gen_spend.py")], check=True,
                capture_output=True)
-subprocess.run(["feast", "apply"], cwd=repo, check=True, capture_output=True)
-subprocess.run(["feast", "materialize-incremental", "2027-01-01T00:00:00"],
+subprocess.run([sys.executable, "-m", "feast.cli.cli", "apply"], cwd=repo, check=True, capture_output=True)
+subprocess.run([sys.executable, "-m", "feast.cli.cli", "materialize-incremental",
+                datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")],
                cwd=repo, check=True, capture_output=True)
 print("feast apply + materialize OK")
 
@@ -182,6 +205,12 @@ out = fs.get_online_features(
 for i in range(3):
     print(f"user={out['user_id'][i]}  avg7d={out['avg_amount_7d'][i]:>12,.0f}  "
           f"ratio={out['amount_vs_avg'][i]:6.2f}  spike={out['is_spike'][i]}")
+assert out["avg_amount_7d"][0] == out["avg_amount_7d"][1]
+assert out["amount_vs_avg"][0] != out["amount_vs_avg"][1]
+assert out["is_spike"][:2] == [0, 1]
+assert leakage_experiment(events, "session_id").set_index("encoding").loc["target-naive", "gap"] > 0.30
+assert abs(leakage_experiment(events, "session_id").set_index("encoding").loc["target-in-fold", "gap"]) < 0.10
+print("PASS — leakage gap > 0.30; request-time amounts produce different ratios for the same user")
 
 # %% [markdown]
 # Hai dòng đầu là **cùng một user, cùng một feature đã lưu** — chỉ khác `amount`

@@ -1,0 +1,32 @@
+[
+  {
+    "notebook": "01_embeddings_index",
+    "passed": true,
+    "output": "submission\\runs\\20261005T023342Z_5a775b\\01_embeddings_index.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "02_hybrid_search_rrf",
+    "passed": true,
+    "output": "submission\\runs\\20261005T023342Z_5a775b\\02_hybrid_search_rrf.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "03_search_api_benchmark",
+    "passed": true,
+    "output": "submission\\runs\\20261005T023342Z_5a775b\\03_search_api_benchmark.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "05_filtered_search",
+    "passed": true,
+    "output": "submission\\runs\\20261005T023342Z_5a775b\\05_filtered_search.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "07_semantic_cache",
+    "passed": true,
+    "output": "submission\\runs\\20261005T023342Z_5a775b\\07_semantic_cache.ipynb",
+    "error": null
+  }
+]

@@ -1,0 +1,111 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 07_semantic_cache</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: notebooks/07_semantic_cache.ipynb<br>SHA-256: 2d6874efe32e4009ef94dd066bdc70deeaca0c7da0e3b5fc9c10ee543e50e0ff</p><nav><ul><li><a href="#cell-3">1. Hit và miss cơ bản · Out[2]</a></li><li><a href="#cell-5">2. Sweep ngưỡng: tiết kiệm mua bằng câu trả lời sai · Out[3]</a></li><li><a href="#cell-8">3. TTL: câu trả lời cũ không tự biết mình cũ · Out[4]</a></li><li><a href="#cell-11">4. Rò chéo tenant — đây là lỗ hổng bảo mật, không phải bug cache · Out[5]</a></li></ul></nav><section id="cell-3"><h2>1. Hit và miss cơ bản · Out[2]</h2><details><summary>Code nguồn</summary><pre>cache = SemanticCache(client=client, embedder=embedder, threshold=0.75, ttl_s=3600)
+cache.put(&quot;acme&quot;, &quot;làm sao tối ưu chi phí cloud&quot;, &quot;Dùng spot instance và autoscaling.&quot;)
+
+for probe in [&quot;làm sao tối ưu chi phí cloud&quot;,        # y hệt
+              &quot;cách giảm chi phí hạ tầng đám mây&quot;,   # diễn đạt khác
+              &quot;cách kiểm thử unit test&quot;]:            # chủ đề khác hẳn
+    hit = cache.get(&quot;acme&quot;, probe)
+    print(f&quot;{probe:&lt;38} → {&#x27;HIT  &#x27; + f&#x27;{hit.score:.3f}&#x27; if hit else &#x27;MISS&#x27;}&quot;)</pre></details><pre>làm sao tối ưu chi phí cloud           → HIT  1.000
+cách giảm chi phí hạ tầng đám mây      → MISS
+cách kiểm thử unit test                → MISS
+</pre></section><section id="cell-5"><h2>2. Sweep ngưỡng: tiết kiệm mua bằng câu trả lời sai · Out[3]</h2><details><summary>Code nguồn</summary><pre>golden = [json.loads(l) for l in (DATA / &quot;golden_set.jsonl&quot;).open(encoding=&quot;utf-8&quot;)]
+warm, cold = golden[::2], golden[1::2]
+
+sweep = SemanticCache(client=client, embedder=embedder, threshold=0.0, ttl_s=None)
+for g in warm:
+    sweep.put(&quot;acme&quot;, g[&quot;query&quot;], f&quot;ANSWER::{g[&#x27;query_id&#x27;]}&quot;)
+
+
+def variants(q: str) -&gt; list[str]:
+    &quot;&quot;&quot;Cách người thật hỏi lại cùng một câu.&quot;&quot;&quot;
+    w = q.split()
+    return [f&quot;cho tôi hỏi {q}&quot;,
+            f&quot;{q} thì làm thế nào&quot;,
+            &quot; &quot;.join(w[:-1]) if len(w) &gt; 2 else q]
+
+
+positives = []   # nguồn CÓ trong cache -&gt; hit là đúng
+for g in warm:
+    for v in variants(g[&quot;query&quot;]):
+        p = sweep.peek(&quot;acme&quot;, v)
+        if p:
+            positives.append((p[0], p[1][&quot;question&quot;] == g[&quot;query&quot;]))
+
+negatives = []   # nguồn KHÔNG có trong cache -&gt; mọi hit đều là trả lời sai
+for g in cold:
+    for v in variants(g[&quot;query&quot;]):
+        p = sweep.peek(&quot;acme&quot;, v)
+        if p:
+            negatives.append(p[0])
+
+print(f&quot;cache: {len(warm)} câu   probe: {len(positives)} positive / {len(negatives)} negative\n&quot;)
+print(f&quot;{&#x27;ngưỡng&#x27;:&gt;8}{&#x27;tiết kiệm&#x27;:&gt;12}{&#x27;trả lời sai&#x27;:&gt;14}   {&#x27;&#x27;:&lt;4}&quot;)
+sweep_rows = []
+for th in (0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95):
+    saved = sum(1 for sc, ok in positives if sc &gt;= th and ok) / len(positives)
+    wrong = sum(1 for sc in negatives if sc &gt;= th) / len(negatives)
+    wrong_positive = sum(1 for sc, ok in positives if sc &gt;= th and not ok) / len(positives)
+    sweep_rows.append((th, saved, wrong, wrong_positive))
+    flag = &quot;NGUY HIỂM&quot; if wrong &gt; 0.20 else (&quot;quá chặt&quot; if saved &lt; 0.80 else &quot;cân bằng&quot;)
+    print(f&quot;{th:&gt;8.2f}{saved:&gt;12.0%}{wrong:&gt;14.0%}   {flag}&quot;)
+acceptable = [row for row in sweep_rows if row[2] &lt;= 0.05 and row[3] &lt;= 0.05]
+if acceptable:
+    chosen = max(acceptable, key=lambda row: (row[1], -row[0]))
+    print(f&quot;Selected threshold on this calibration set: {chosen[0]:.2f}; &quot;
+          f&quot;correct reuse={chosen[1]:.1%}, cold false hits={chosen[2]:.1%}, &quot;
+          f&quot;positive wrong-answer hits={chosen[3]:.1%}&quot;)
+else:
+    print(&quot;No candidate meets the 5% false-hit budget; disable semantic reuse until recalibrated&quot;)
+at_75 = next(row for row in sweep_rows if row[0] == 0.75)
+print(f&quot;At 0.75: cold false-hit rate={at_75[2]:.1%}. A threshold copied from another &quot;
+      &quot;benchmark cannot guarantee correctness on this query distribution.&quot;)</pre></details><pre>cache: 25 câu   probe: 75 positive / 75 negative
+
+  ngưỡng   tiết kiệm   trả lời sai       
+    0.60        100%           97%   NGUY HIỂM
+    0.70        100%           60%   NGUY HIỂM
+    0.75        100%           36%   NGUY HIỂM
+    0.80        100%            5%   cân bằng
+    0.85        100%            0%   cân bằng
+    0.90         96%            0%   cân bằng
+    0.95         53%            0%   quá chặt
+Selected threshold on this calibration set: 0.85; correct reuse=100.0%, cold false hits=0.0%, positive wrong-answer hits=0.0%
+At 0.75: cold false-hit rate=36.0%. A threshold copied from another benchmark cannot guarantee correctness on this query distribution.
+</pre></section><section id="cell-8"><h2>3. TTL: câu trả lời cũ không tự biết mình cũ · Out[4]</h2><details><summary>Code nguồn</summary><pre>ttl_cache = SemanticCache(client=client, embedder=embedder, threshold=0.75, ttl_s=1800)
+ttl_cache.put(&quot;acme&quot;, &quot;giá GPU hiện tại là bao nhiêu&quot;, &quot;Khoảng $2/giờ cho A100.&quot;)
+
+for jump in (0, 600, 3600):
+    ttl_cache.advance(jump)
+    hit = ttl_cache.get(&quot;acme&quot;, &quot;giá GPU hiện tại là bao nhiêu&quot;)
+    print(f&quot;t = {ttl_cache._clock:&gt;6.0f}s  → {&#x27;HIT&#x27; if hit else &#x27;MISS (hết hạn)&#x27;}&quot;)
+
+print(f&quot;\nstale evictions: {ttl_cache.stats.stale_evictions}&quot;)
+assert hit is None and ttl_cache.stats.stale_evictions &gt;= 1</pre></details><pre>t =      0s  → HIT
+t =    600s  → HIT
+t =   4200s  → MISS (hết hạn)
+
+stale evictions: 1
+</pre></section><section id="cell-11"><h2>4. Rò chéo tenant — đây là lỗ hổng bảo mật, không phải bug cache · Out[5]</h2><details><summary>Code nguồn</summary><pre>leaky = SemanticCache(client=client, embedder=embedder, threshold=0.70,
+                      ttl_s=None, namespaced=False)
+leaky.put(&quot;acme&quot;, &quot;doanh thu quý 3 của chúng tôi&quot;,
+          &quot;Doanh thu ACME quý 3: 4,2 tỷ VND.&quot;)   # dữ liệu của ACME
+
+stolen = leaky.get(&quot;globex&quot;, &quot;doanh thu quý 3 của chúng tôi&quot;)
+print(&quot;namespaced=False → GLOBEX nhận được:&quot;)
+print(&quot;   &quot;, stolen.answer if stolen else &quot;(miss)&quot;)
+print(&quot;    chủ sở hữu thật:&quot;, stolen.tenant if stolen else &quot;-&quot;)
+
+safe = SemanticCache(client=client, embedder=embedder, threshold=0.70,
+                     ttl_s=None, namespaced=True)
+safe.put(&quot;acme&quot;, &quot;doanh thu quý 3 của chúng tôi&quot;, &quot;Doanh thu ACME quý 3: 4,2 tỷ VND.&quot;)
+blocked = safe.get(&quot;globex&quot;, &quot;doanh thu quý 3 của chúng tôi&quot;)
+print(&quot;\nnamespaced=True  → GLOBEX nhận được:&quot;, blocked.answer if blocked else &quot;MISS (đúng)&quot;)
+assert stolen is not None and stolen.tenant == &quot;acme&quot;
+assert blocked is None
+print(&quot;PASS — tenant leak demonstrated and blocked by namespace; TTL expiry verified&quot;)</pre></details><pre>namespaced=False → GLOBEX nhận được:
+
+    Doanh thu ACME quý 3: 4,2 tỷ VND.
+    chủ sở hữu thật: acme
+
+namespaced=True  → GLOBEX nhận được: MISS (đúng)
+PASS — tenant leak demonstrated and blocked by namespace; TTL expiry verified
+</pre></section></html>

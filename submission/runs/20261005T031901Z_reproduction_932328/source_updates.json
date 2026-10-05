@@ -1,0 +1,17 @@
+{
+  "reason": "Workspace-local default model cache; patched before installation completed and any affected code executed",
+  "files": [
+    {
+      "path": "app/embeddings.py",
+      "original_copy_sha256": "3527ab57eadfb3c0486532e645b49536f306a0ac2025cd965acbac6843994a4d",
+      "executed_sha256": "85d86edd194f457aac3ae6e69cb52284cd2693bee945a092a46523b39d0812b2",
+      "current_workspace_sha256": "85d86edd194f457aac3ae6e69cb52284cd2693bee945a092a46523b39d0812b2"
+    },
+    {
+      "path": "scripts/verify_lite.py",
+      "original_copy_sha256": "ac6f76f79b34c2d3cc0fc1cc29ad2a40c31e67d513ee0352d7fc057c60a5496c",
+      "executed_sha256": "360fb6d7a0afc92fe403db2decefe077f0235e1ae283901db8fd22df5cb85757",
+      "current_workspace_sha256": "360fb6d7a0afc92fe403db2decefe077f0235e1ae283901db8fd22df5cb85757"
+    }
+  ]
+}

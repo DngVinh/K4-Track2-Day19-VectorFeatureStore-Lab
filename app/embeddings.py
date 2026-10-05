@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable, Iterator
 
 import numpy as np
@@ -77,7 +78,10 @@ class Embedder:
         p = self.spec.provider
         if p == "fastembed":
             from fastembed import TextEmbedding
-            self._impl = TextEmbedding(model_name=self.spec.model)
+            cache = os.getenv("FASTEMBED_CACHE_PATH") or str(Path(__file__).resolve().parent.parent / ".cache/fastembed")
+            # Lite serves short, single-query CPU requests. Bound ORT's thread
+            # pool instead of letting all physical cores spin during fusion.
+            self._impl = TextEmbedding(model_name=self.spec.model, cache_dir=cache, threads=1)
         elif p == "sentence-transformers":
             try:
                 from sentence_transformers import SentenceTransformer

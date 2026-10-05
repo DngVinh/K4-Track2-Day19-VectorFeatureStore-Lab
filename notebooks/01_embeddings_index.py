@@ -132,6 +132,9 @@ hits2 = client.query_points(collection_name="lab19", query=q_vec2, limit=5).poin
 print(f"Query (paraphrase): {query2!r}")
 for h in hits2:
     print(f"  [{h.payload['topic']:>9}] score={h.score:.3f}  {h.payload['title']}")
+assert len(hits2) == 5
+assert all(h.payload["topic"] == "cloud" for h in hits2), "Paraphrase top-5 is not entirely cloud"
+print("PASS — indexed 1000 vectors; all five paraphrase hits are in the cloud cluster")
 
 # %% [markdown]
 # ## Deliverable evidence (chụp màn hình)

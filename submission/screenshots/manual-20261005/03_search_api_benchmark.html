@@ -1,0 +1,180 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 03_search_api_benchmark</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/03_search_api_benchmark.ipynb<br>SHA-256: 109a17a11830880dad005b88978252bbfaef952fadfc3f2d46db56a4da300ade</p><nav><ul><li><a href="#cell-3">1. Khởi động API server (background) · Out[2]</a></li><li><a href="#cell-5">2. Single query — kiểm tra response shape · Out[3]</a></li><li><a href="#cell-7">3. TODO — Latency benchmark (100 queries × 3 modes) · Out[4]</a></li><li><a href="#cell-9">4. Rubric assertion — hybrid P99 server-side &lt; 50ms · Out[5]</a></li><li><a href="#cell-11">5. Cleanup — stop the API server · Out[6]</a></li></ul></nav><section id="cell-3"><h2>1. Khởi động API server (background) · Out[2]</h2><details><summary>Code nguồn</summary><pre>ROOT = Path(_setup.__file__).resolve().parent.parent
+with socket.socket() as available:
+    available.bind((&quot;127.0.0.1&quot;, 0))
+    PORT = available.getsockname()[1]
+proc = subprocess.Popen(
+    [sys.executable, &quot;-m&quot;, &quot;uvicorn&quot;, &quot;app.main:app&quot;, &quot;--host&quot;, &quot;127.0.0.1&quot;,
+     &quot;--port&quot;, str(PORT), &quot;--log-level&quot;, &quot;warning&quot;],
+    cwd=str(ROOT),
+)
+
+# Đợi server up + warm (Searcher.from_corpus loads embeddings + indexes 1000 docs)
+URL = f&quot;http://127.0.0.1:{PORT}&quot;
+for _ in range(180):
+    if proc.poll() is not None:
+        raise RuntimeError(&quot;Lab API process exited before readiness&quot;)
+    try:
+        r = httpx.get(f&quot;{URL}/healthz&quot;, timeout=2.0)
+        if r.status_code == 200 and r.json().get(&quot;ready&quot;):
+            break
+    except httpx.HTTPError:
+        pass
+    time.sleep(1)
+else:
+    proc.terminate()
+    raise RuntimeError(&quot;API didn&#x27;t become ready within 180s&quot;)
+
+print(httpx.get(f&quot;{URL}/healthz&quot;).json())</pre></details><pre>{&#x27;ready&#x27;: True, &#x27;n_docs&#x27;: 1000}
+</pre></section><section id="cell-5"><h2>2. Single query — kiểm tra response shape · Out[3]</h2><details><summary>Code nguồn</summary><pre>r = httpx.get(f&quot;{URL}/search&quot;, params={&quot;q&quot;: &quot;cloud computing tự động mở rộng&quot;, &quot;mode&quot;: &quot;hybrid&quot;})
+r.raise_for_status()
+body = r.json()
+from app.main import SearchResponse
+SearchResponse.model_validate(body)
+print(json.dumps(body, ensure_ascii=False, indent=2))
+print(f&quot;latency_ms: {body[&#x27;latency_ms&#x27;]:.1f}&quot;)
+print(f&quot;top-3 hits:&quot;)
+for h in body[&quot;hits&quot;][:3]:
+    print(f&quot;  {h[&#x27;doc_id&#x27;]:&gt;14}  score={h[&#x27;score&#x27;]:.4f}  {h[&#x27;title&#x27;]}&quot;)</pre></details><pre>C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T040443Z_reproduction_7d5aac\.venv\Lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+
+{
+  &quot;query&quot;: &quot;cloud computing tự động mở rộng&quot;,
+  &quot;mode&quot;: &quot;hybrid&quot;,
+  &quot;top_k&quot;: 10,
+  &quot;latency_ms&quot;: 15.18249999935506,
+  &quot;hits&quot;: [
+    {
+      &quot;doc_id&quot;: &quot;cloud_016&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, serverless, AWS. Khái niệm hạ tầng và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và AWS.&quot;,
+      &quot;score&quot;: 0.03252247488101534
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_072&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, Azure, Kubernetes. Khái niệm triển khai và đám mây là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và Kubernetes.&quot;,
+      &quot;score&quot;: 0.032266458495966696
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_053&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Để tối ưu chi phí, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm AWS, auto-scaling, cloud. Khái niệm tự động mở rộng và triển khai là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với AWS và cloud.&quot;,
+      &quot;score&quot;: 0.0315136476426799
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_029&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Tại các doanh nghiệp công nghệ Việt Nam, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, Lambda, serverless. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và serverless.&quot;,
+      &quot;score&quot;: 0.030776515151515152
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_040&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm multi-tenant, Kubernetes, AWS. Khái niệm đám mây và triển khai là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với multi-tenant và AWS.&quot;,
+      &quot;score&quot;: 0.029910714285714284
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_045&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Để tối ưu chi phí, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm Kubernetes, serverless, auto-scaling. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với Kubernetes và auto-scaling.&quot;,
+      &quot;score&quot;: 0.02919863597612958
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_087&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm serverless, container, AWS. Khái niệm đa người dùng và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với serverless và AWS.&quot;,
+      &quot;score&quot;: 0.026709401709401708
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_000&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, GCP, Azure. Khái niệm không máy chủ và hạ tầng là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và Azure.&quot;,
+      &quot;score&quot;: 0.02607709750566893
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_091&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Khi triển khai ở quy mô lớn, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm Azure, multi-tenant, cloud. Khái niệm triển khai và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với Azure và cloud.&quot;,
+      &quot;score&quot;: 0.026013513513513515
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_039&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tách biệt môi trường dev và prod&quot;,
+      &quot;text&quot;: &quot;Trong môi trường production hiện đại, điện toán đám mây đòi hỏi phải tách biệt môi trường dev và prod. Các công cụ phổ biến gồm cloud, auto-scaling, multi-tenant. Khái niệm hạ tầng và tự động mở rộng là nền tảng quan trọng. Bài viết này giải thích cách tách biệt môi trường dev và prod một cách thực tế, kèm ví dụ minh hoạ với cloud và multi-tenant.&quot;,
+      &quot;score&quot;: 0.024695121951219513
+    }
+  ]
+}
+latency_ms: 15.2
+top-3 hits:
+       cloud_016  score=0.0325  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_072  score=0.0323  Điện toán đám mây: tự động mở rộng theo lưu lượng
+       cloud_053  score=0.0315  Điện toán đám mây: tự động mở rộng theo lưu lượng
+</pre></section><section id="cell-7"><h2>3. TODO — Latency benchmark (100 queries × 3 modes) · Out[4]</h2><details><summary>Code nguồn</summary><pre>import json
+
+DATA = ROOT / &quot;data&quot;
+golden = [json.loads(l) for l in (DATA / &quot;golden_set.jsonl&quot;).open(encoding=&quot;utf-8&quot;)]
+assert len(golden) == 50
+http = httpx.Client(base_url=URL, timeout=30)
+for mode in (&quot;keyword&quot;, &quot;semantic&quot;, &quot;hybrid&quot;):
+    for q in golden[:10]:
+        response = http.get(&quot;/search&quot;, params={&quot;q&quot;: q[&quot;query&quot;], &quot;mode&quot;: mode})
+        response.raise_for_status()
+print(&quot;Warmup completed: 10 requests per mode (excluded from measurements)&quot;)
+
+
+def percentile(values: list[float], p: float) -&gt; float:
+    n = len(values)
+    if n == 0:
+        return 0.0
+    return sorted(values)[min(int(n * p), n - 1)]
+
+
+def benchmark_mode(mode: str, reps: int = 2) -&gt; dict[str, float]:
+    server_latencies: list[float] = []
+    wall_latencies: list[float] = []
+    for _ in range(reps):
+        for q in golden:
+            t0 = time.perf_counter()
+            r = http.get(&quot;/search&quot;, params={&quot;q&quot;: q[&quot;query&quot;], &quot;mode&quot;: mode})
+            r.raise_for_status()
+            SearchResponse.model_validate(r.json())
+            wall_latencies.append((time.perf_counter() - t0) * 1000)
+            server_latencies.append(r.json()[&quot;latency_ms&quot;])
+    return {
+        &quot;p50_server&quot;: percentile(server_latencies, 0.50),
+        &quot;p95_server&quot;: percentile(server_latencies, 0.95),
+        &quot;p99_server&quot;: percentile(server_latencies, 0.99),
+        &quot;p99_wall&quot;:   percentile(wall_latencies, 0.99),
+    }
+
+
+print(f&quot;  {&#x27;mode&#x27;:10}  {&#x27;P50&#x27;:&gt;7}  {&#x27;P95&#x27;:&gt;7}  {&#x27;P99&#x27;:&gt;7}  {&#x27;P99(wall)&#x27;:&gt;9}&quot;)
+results = {}
+for mode in (&quot;keyword&quot;, &quot;semantic&quot;, &quot;hybrid&quot;):
+    res = benchmark_mode(mode)
+    results[mode] = res
+    print(f&quot;  {mode:10}  {res[&#x27;p50_server&#x27;]:&gt;5.1f}ms  {res[&#x27;p95_server&#x27;]:&gt;5.1f}ms  &quot;
+          f&quot;{res[&#x27;p99_server&#x27;]:&gt;5.1f}ms  {res[&#x27;p99_wall&#x27;]:&gt;7.1f}ms&quot;)</pre></details><pre>Warmup completed: 10 requests per mode (excluded from measurements)
+  mode            P50      P95      P99  P99(wall)
+
+  keyword       1.4ms    2.5ms    2.9ms      5.2ms
+
+  semantic     13.5ms   17.9ms   19.3ms     21.2ms
+
+  hybrid       15.9ms   21.4ms   27.1ms     29.0ms
+</pre></section><section id="cell-9"><h2>4. Rubric assertion — hybrid P99 server-side &lt; 50ms · Out[5]</h2><details><summary>Code nguồn</summary><pre>hybrid_p99 = results[&quot;hybrid&quot;][&quot;p99_server&quot;]
+print(f&quot;Hybrid P99 server-side: {hybrid_p99:.1f}ms&quot;)
+if hybrid_p99 &lt; 50:
+    print(f&quot;PASS — hybrid P99 &lt; 50ms ({hybrid_p99:.1f}ms)&quot;)
+else:
+    print(f&quot;WARN — hybrid P99 &gt;= 50ms ({hybrid_p99:.1f}ms)&quot;)
+    print(&quot;  Possible causes: cold cache, fastembed model not warm yet, or RRF depth=50 is too aggressive&quot;)
+    print(&quot;  Check: re-run benchmark after 10 warm-up queries; or reduce RRF depth&quot;)</pre></details><pre>Hybrid P99 server-side: 27.1ms
+PASS — hybrid P99 &lt; 50ms (27.1ms)
+</pre></section><section id="cell-11"><h2>5. Cleanup — stop the API server · Out[6]</h2><details><summary>Code nguồn</summary><pre>proc.terminate()
+proc.wait(timeout=5)
+http.close()
+print(&quot;API server stopped&quot;)
+assert hybrid_p99 &lt; 50, f&quot;Hybrid P99 {hybrid_p99:.2f}ms exceeds 50ms&quot;</pre></details><pre>API server stopped
+</pre></section></html>

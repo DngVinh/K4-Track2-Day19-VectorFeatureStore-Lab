@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "--noprofile",
+    "--norc",
+    "-c",
+    "bash --version; make --version; python --version; uv --version"
+  ],
+  "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+  "started_utc": "2026-10-05T04:04:43.741359+00:00",
+  "finished_utc": "2026-10-05T04:04:43.940751+00:00",
+  "exit_code": 0,
+  "stdout": "tools.stdout.txt",
+  "stderr": "tools.stderr.txt"
+}

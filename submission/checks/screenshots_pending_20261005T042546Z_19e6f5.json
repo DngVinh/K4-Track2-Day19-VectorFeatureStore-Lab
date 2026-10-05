@@ -1,0 +1,11 @@
+{
+  "command": [
+    "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.venv\\Scripts\\python.exe",
+    "scripts/check_submission.py",
+    "--require-screenshots"
+  ],
+  "started_utc": "2026-10-05T04:25:46.187917+00:00",
+  "finished_utc": "2026-10-05T04:25:48.160363+00:00",
+  "exit_code": 1,
+  "workspace_temp": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\tmp\\check_9cb9df3b6c924785a411f8c10e467a1a"
+}

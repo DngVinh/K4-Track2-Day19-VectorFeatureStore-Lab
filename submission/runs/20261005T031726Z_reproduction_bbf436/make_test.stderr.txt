@@ -1,0 +1,2 @@
+C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T031726Z_reproduction_bbf436\.venv\Scripts\python.exe: No module named pytest
+make: *** [Makefile:47: test] Error 1

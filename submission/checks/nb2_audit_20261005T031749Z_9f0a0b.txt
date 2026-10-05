@@ -1,0 +1,27 @@
+original BM25 / Vector / Hybrid
+  overall 77.8% / 73.2% / 78.6%
+  exact        96.7% / 88.7% / 96.7%
+  paraphrase   33.3% / 24.0% / 32.0%
+  mixed        97.0% / 98.5% / 100.0%
+  criteria {'overall_hybrid_strict_win': True, 'mixed_hybrid_strict_win': True, 'paraphrase_vector_strict_win': False, 'exact_bm25_tied_or_best': True}
+query_instruction BM25 / Vector / Hybrid
+  overall 77.8% / 73.6% / 77.2%
+  exact        96.7% / 86.7% / 96.0%
+  paraphrase   33.3% / 25.3% / 31.3%
+  mixed        97.0% / 100.0% / 97.5%
+  criteria {'overall_hybrid_strict_win': False, 'mixed_hybrid_strict_win': False, 'paraphrase_vector_strict_win': False, 'exact_bm25_tied_or_best': True}
+nfc_punctuation BM25 / Vector / Hybrid
+  overall 82.8% / 73.2% / 79.6%
+  exact        100.0% / 88.7% / 100.0%
+  paraphrase   42.7% / 24.0% / 32.0%
+  mixed        100.0% / 98.5% / 100.0%
+  criteria {'overall_hybrid_strict_win': False, 'mixed_hybrid_strict_win': False, 'paraphrase_vector_strict_win': False, 'exact_bm25_tied_or_best': True}
+instruction_and_nfc BM25 / Vector / Hybrid
+  overall 82.8% / 73.6% / 80.4%
+  exact        100.0% / 86.7% / 100.0%
+  paraphrase   42.7% / 25.3% / 34.7%
+  mixed        100.0% / 100.0% / 100.0%
+  criteria {'overall_hybrid_strict_win': False, 'mixed_hybrid_strict_win': False, 'paraphrase_vector_strict_win': False, 'exact_bm25_tied_or_best': True}
+No candidate is automatically adopted. Failures remain visible; no held-out generalization claim.
+
+STDERR:

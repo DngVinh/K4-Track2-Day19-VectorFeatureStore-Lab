@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T031726Z_reproduction_bbf436\scripts\verify_lite.py", line 26, in main
+    from fastembed import TextEmbedding
+ModuleNotFoundError: No module named 'fastembed'
+make: *** [Makefile:31: verify-lite] Error 1

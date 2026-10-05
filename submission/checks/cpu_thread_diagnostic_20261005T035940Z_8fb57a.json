@@ -1,0 +1,12 @@
+{
+  "command": [
+    "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.venv\\Scripts\\python.exe",
+    "scripts/benchmark.py",
+    "--reps",
+    "10"
+  ],
+  "started_utc": "2026-10-05T03:59:40.815721+00:00",
+  "finished_utc": "2026-10-05T04:01:49.927728+00:00",
+  "exit_code": 0,
+  "workspace_temp": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\tmp\\check_c2a391c6cf8142dd8c89133fe11fe2e2"
+}

@@ -1,0 +1,32 @@
+[
+  {
+    "notebook": "03_search_api_benchmark",
+    "passed": true,
+    "output": "submission\\runs\\20261005T041234Z_30d889\\03_search_api_benchmark.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "04_feast_feature_store",
+    "passed": true,
+    "output": "submission\\runs\\20261005T041234Z_30d889\\04_feast_feature_store.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "05_filtered_search",
+    "passed": true,
+    "output": "submission\\runs\\20261005T041234Z_30d889\\05_filtered_search.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "06_agent_retrieval",
+    "passed": true,
+    "output": "submission\\runs\\20261005T041234Z_30d889\\06_agent_retrieval.ipynb",
+    "error": null
+  },
+  {
+    "notebook": "08_feature_engineering",
+    "passed": true,
+    "output": "submission\\runs\\20261005T041234Z_30d889\\08_feature_engineering.ipynb",
+    "error": null
+  }
+]

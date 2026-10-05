@@ -27,6 +27,9 @@ pydantic>=2.9,<3.0
 # Data
 polars>=1.13.2,<2.0                    # 1.13.1 was yanked
 pyarrow>=17,<26                         # <22 had no cp314 wheel -> source build failed on Py3.14
+# PyArrow 25's Parquet DLL is blocked by Application Control on this Windows
+# host. 24.0.0 loads successfully without changing any Windows security policy.
+pyarrow==24.0.0; sys_platform == "win32"
 
 # Notebook
 jupyterlab>=4.3,<5.0

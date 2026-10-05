@@ -1,0 +1,75 @@
+[
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "bash --version; make --version; python --version"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+    "started_utc": "2026-10-05T03:17:26.943603+00:00",
+    "finished_utc": "2026-10-05T03:17:27.069417+00:00",
+    "exit_code": 0,
+    "stdout": "tools.stdout.txt",
+    "stderr": "tools.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "bash setup-lite.sh && make benchmark"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+    "started_utc": "2026-10-05T03:17:27.071157+00:00",
+    "finished_utc": "2026-10-05T03:18:17.680952+00:00",
+    "exit_code": 2,
+    "stdout": "setup_benchmark.stdout.txt",
+    "stderr": "setup_benchmark.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "make test"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+    "started_utc": "2026-10-05T03:18:17.684972+00:00",
+    "finished_utc": "2026-10-05T03:18:18.038372+00:00",
+    "exit_code": 2,
+    "stdout": "make_test.stdout.txt",
+    "stderr": "make_test.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Program Files\\Git\\bin\\bash.exe",
+      "--noprofile",
+      "--norc",
+      "-c",
+      "make verify-lite"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+    "started_utc": "2026-10-05T03:18:18.049039+00:00",
+    "finished_utc": "2026-10-05T03:18:18.458641+00:00",
+    "exit_code": 2,
+    "stdout": "make_verify_lite.stdout.txt",
+    "stderr": "make_verify_lite.stderr.txt"
+  },
+  {
+    "command": [
+      "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436\\.venv\\Scripts\\python.exe",
+      "-c",
+      "import sys,platform,importlib.metadata as m,json; print(json.dumps({'python':sys.version,'platform':platform.platform(),'packages':{p:m.version(p) for p in ('fastembed','qdrant-client','feast','dill','pyarrow','numpy','pytest','jupytext','uv')}},indent=2))"
+    ],
+    "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031726Z_reproduction_bbf436",
+    "started_utc": "2026-10-05T03:18:18.465486+00:00",
+    "finished_utc": "2026-10-05T03:18:18.886670+00:00",
+    "exit_code": 1,
+    "stdout": "environment.stdout.txt",
+    "stderr": "environment.stderr.txt"
+  }
+]

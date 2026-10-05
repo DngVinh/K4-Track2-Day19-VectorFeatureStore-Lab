@@ -17,6 +17,8 @@
 # %%
 import _setup  # noqa: F401
 import subprocess
+import json
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -38,7 +40,7 @@ NOW = datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def make_user_profile(n_users: int = 100) -> pl.DataFrame:
-    return pl.DataFrame({
+    current = pl.DataFrame({
         "user_id": [f"u_{i:03d}" for i in range(n_users)],
         "reading_speed_wpm": [180 + (i * 7) % 200 for i in range(n_users)],
         "preferred_language": ["vi" if i % 3 != 0 else "en" for i in range(n_users)],
@@ -46,13 +48,21 @@ def make_user_profile(n_users: int = 100) -> pl.DataFrame:
             ["ai_ml", "cloud", "security", "database", "devops"][i % 5]
             for i in range(n_users)
         ],
-        "event_timestamp": [NOW - timedelta(hours=i % 48) for i in range(n_users)],
+        "event_timestamp": [NOW for i in range(n_users)],
     })
+    previous = current.with_columns(
+        (pl.col("reading_speed_wpm") - 10).alias("reading_speed_wpm"),
+        pl.lit(NOW - timedelta(hours=3)).alias("event_timestamp"),
+    )
+    return pl.concat([previous, current])
 
 
 def make_item_popularity(n_items: int = 1000) -> pl.DataFrame:
+    corpus = [json.loads(line) for line in
+              (REPO_ROOT / "data" / "corpus_vn.jsonl").read_text(encoding="utf-8").splitlines()]
+    assert len(corpus) == n_items
     return pl.DataFrame({
-        "doc_id": [f"item_{i:04d}" for i in range(n_items)],
+        "doc_id": [d["doc_id"] for d in corpus],
         "click_count_24h": [(i * 13) % 500 for i in range(n_items)],
         "ctr_7d": [round(((i * 7) % 100) / 100.0, 3) for i in range(n_items)],
         "avg_dwell_seconds": [10.0 + (i * 0.7) % 90 for i in range(n_items)],
@@ -84,7 +94,7 @@ for p in sorted(FEAST_DATA.glob("*.parquet")):
 
 # %%
 res = subprocess.run(
-    ["feast", "apply"],
+    [sys.executable, "-m", "feast.cli.cli", "apply"],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -94,6 +104,11 @@ if res.stderr:
     print("STDERR:")
     print(res.stderr)
 assert res.returncode == 0, f"feast apply failed: {res.stderr}"
+res = subprocess.run([sys.executable, "-m", "feast.cli.cli", "feature-views", "list"], cwd=str(FEAST_DIR),
+                     capture_output=True, text=True, check=True)
+print(res.stdout)
+for name in ("user_profile_features", "item_popularity_features", "query_velocity_features"):
+    assert name in res.stdout
 
 # %% [markdown]
 # ## 3. `feast materialize-incremental` — load offline → online
@@ -104,7 +119,7 @@ assert res.returncode == 0, f"feast apply failed: {res.stderr}"
 # %%
 end_dt = NOW.strftime("%Y-%m-%dT%H:%M:%S")
 res = subprocess.run(
-    ["feast", "materialize-incremental", end_dt],
+    [sys.executable, "-m", "feast.cli.cli", "materialize-incremental", end_dt],
     cwd=str(FEAST_DIR),
     capture_output=True, text=True, check=False,
 )
@@ -145,6 +160,22 @@ features = fs.get_online_features(
 single_latency_ms = (time.perf_counter() - t0) * 1000
 print(f"Single lookup: {single_latency_ms:.2f}ms")
 print({k: v[0] for k, v in features.items()})
+assert features["reading_speed_wpm"] == [187]
+assert features["queries_last_hour"] == [11]
+assert features["topic_affinity"] == ["cloud"]
+print("Materialized online entity counts (verified by actual Feast lookups):")
+corpus_ids = [json.loads(line)["doc_id"] for line in
+              (REPO_ROOT / "data/corpus_vn.jsonl").read_text(encoding="utf-8").splitlines()]
+for feature, entity_key, entity_ids in (
+    ("user_profile_features:reading_speed_wpm", "user_id", [f"u_{i:03d}" for i in range(100)]),
+    ("item_popularity_features:click_count_24h", "doc_id", corpus_ids),
+    ("query_velocity_features:queries_last_hour", "user_id", [f"u_{i:03d}" for i in range(100)]),
+):
+    values = fs.get_online_features(features=[feature],
+        entity_rows=[{entity_key: entity_id} for entity_id in entity_ids]).to_dict()
+    materialized = sum(value is not None for value in values[feature.split(":")[1]])
+    print(f"  {feature.split(':')[0]}: {materialized} entities")
+    assert materialized == len(entity_ids)
 
 # %% [markdown]
 # ## 5. TODO — Batch latency benchmark (100 lookups, P99)
@@ -196,6 +227,11 @@ historical = fs.get_historical_features(
     ],
 ).to_df()
 print(historical)
+assert len(historical) == 3
+speeds = historical.set_index("user_id")["reading_speed_wpm"].to_dict()
+assert speeds == {"u_001": 177, "u_002": 184, "u_003": 201}, speeds
+print("PASS — PIT values match the latest snapshot at or before each event; future values excluded")
+assert p99 < 10, f"Online lookup P99 {p99:.2f}ms exceeds 10ms"
 
 # %% [markdown]
 # ## Deliverable evidence

@@ -1,0 +1,86 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 01_embeddings_index</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: notebooks/01_embeddings_index.ipynb<br>SHA-256: 667747ebafbc6b3727292d4d6977a50432f7f43050b1ed140c2cb51c2ca6323b</p><nav><ul><li><a href="#cell-1">NB1 — Embeddings &amp; Vector Indexing · Out[1]</a></li><li><a href="#cell-3">1. Load corpus · Out[2]</a></li><li><a href="#cell-5">2. Embedding model: `BAAI/bge-small-en-v1.5` · Out[3]</a></li><li><a href="#cell-7">3. Index vào Qdrant (in-memory mode) · Out[4]</a></li><li><a href="#cell-9">4. TODO — embed + upsert toàn bộ corpus · Out[5]</a></li><li><a href="#cell-11">5. First similarity search · Out[6]</a></li><li><a href="#cell-13">6. Quick sanity — top-5 should be mostly `cloud` topic · Out[7]</a></li></ul></nav><section id="cell-1"><h2>NB1 — Embeddings &amp; Vector Indexing · Out[1]</h2><details><summary>Code nguồn</summary><pre>import _setup  # noqa: F401  -- adds repo root to sys.path
+import json
+from pathlib import Path
+
+from fastembed import TextEmbedding
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+
+DATA = Path(_setup.__file__).resolve().parent.parent / &quot;data&quot;</pre></details><pre>C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.venv\Lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></section><section id="cell-3"><h2>1. Load corpus · Out[2]</h2><details><summary>Code nguồn</summary><pre>docs = []
+with (DATA / &quot;corpus_vn.jsonl&quot;).open(encoding=&quot;utf-8&quot;) as f:
+    for line in f:
+        docs.append(json.loads(line))
+
+print(f&quot;Corpus size: {len(docs)} docs&quot;)
+print(f&quot;First doc:&quot;)
+print(json.dumps(docs[0], ensure_ascii=False, indent=2))</pre></details><pre>Corpus size: 1000 docs
+First doc:
+{
+  &quot;doc_id&quot;: &quot;frontend_074&quot;,
+  &quot;topic&quot;: &quot;frontend&quot;,
+  &quot;title&quot;: &quot;Frontend: hỗ trợ ngoại tuyến qua service worker&quot;,
+  &quot;text&quot;: &quot;Khi triển khai ở quy mô lớn, frontend đòi hỏi phải hỗ trợ ngoại tuyến qua service worker. Các công cụ phổ biến gồm TypeScript, lazy loading, PWA. Khái niệm tải lười và trạng thái là nền tảng quan trọng. Bài viết này giải thích cách hỗ trợ ngoại tuyến qua service worker một cách thực tế, kèm ví dụ minh hoạ với TypeScript và PWA.&quot;
+}
+</pre></section><section id="cell-5"><h2>2. Embedding model: `BAAI/bge-small-en-v1.5` · Out[3]</h2><details><summary>Code nguồn</summary><pre>embedder = TextEmbedding(model_name=&quot;BAAI/bge-small-en-v1.5&quot;)
+sample = list(embedder.embed([&quot;cloud computing tiếng Việt&quot;]))[0]
+print(f&quot;Vector dim: {len(sample)}&quot;)
+print(f&quot;First 8 values: {sample[:8].tolist()}&quot;)</pre></details><pre>Vector dim: 384
+First 8 values: [-0.05812888965010643, -0.03396972641348839, -0.02015886828303337, -0.08142241835594177, 0.07339559495449066, 0.02859227918088436, -0.02404112182557583, 0.007108722813427448]
+</pre></section><section id="cell-7"><h2>3. Index vào Qdrant (in-memory mode) · Out[4]</h2><details><summary>Code nguồn</summary><pre>client = QdrantClient(&quot;:memory:&quot;)
+client.create_collection(
+    collection_name=&quot;lab19&quot;,
+    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+)</pre></details><pre>True</pre></section><section id="cell-9"><h2>4. TODO — embed + upsert toàn bộ corpus · Out[5]</h2><details><summary>Code nguồn</summary><pre># TODO: implement the embed + upsert loop here.
+# Expected outcome: client.count(&quot;lab19&quot;) == 1000
+# (~30 seconds on first run as fastembed downloads the model.)
+
+BATCH = 64
+points: list[PointStruct] = []
+for start in range(0, len(docs), BATCH):
+    batch = docs[start:start + BATCH]
+    texts = [d[&quot;title&quot;] + &quot; &quot; + d[&quot;text&quot;] for d in batch]
+    vectors = list(embedder.embed(texts))
+    for i, (d, v) in enumerate(zip(batch, vectors)):
+        points.append(PointStruct(
+            id=start + i,
+            vector=v.tolist(),
+            payload={&quot;doc_id&quot;: d[&quot;doc_id&quot;], &quot;topic&quot;: d[&quot;topic&quot;], &quot;title&quot;: d[&quot;title&quot;]},
+        ))
+
+client.upsert(collection_name=&quot;lab19&quot;, points=points)
+n_indexed = client.count(collection_name=&quot;lab19&quot;).count
+print(f&quot;Indexed: {n_indexed} vectors&quot;)
+assert n_indexed == 1000, f&quot;expected 1000 indexed, got {n_indexed}&quot;</pre></details><pre>Indexed: 1000 vectors
+</pre></section><section id="cell-11"><h2>5. First similarity search · Out[6]</h2><details><summary>Code nguồn</summary><pre>query = &quot;cloud computing và tự động mở rộng&quot;
+q_vec = next(embedder.embed([query])).tolist()
+hits = client.query_points(collection_name=&quot;lab19&quot;, query=q_vec, limit=5).points
+
+print(f&quot;Query: {query!r}&quot;)
+print(f&quot;Top-5:&quot;)
+for i, h in enumerate(hits, 1):
+    print(f&quot;  {i}. [{h.payload[&#x27;topic&#x27;]:&gt;9}] score={h.score:.3f}  {h.payload[&#x27;title&#x27;]}&quot;)</pre></details><pre>Query: &#x27;cloud computing và tự động mở rộng&#x27;
+Top-5:
+  1. [    cloud] score=0.804  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  2. [    cloud] score=0.787  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  3. [    cloud] score=0.775  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  4. [    cloud] score=0.774  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  5. [ data_eng] score=0.763  Data engineering: phân vùng theo ngày để tối ưu query
+</pre></section><section id="cell-13"><h2>6. Quick sanity — top-5 should be mostly `cloud` topic · Out[7]</h2><details><summary>Code nguồn</summary><pre>query2 = &quot;phương pháp tự động mở rộng hạ tầng theo lưu lượng người dùng&quot;
+q_vec2 = next(embedder.embed([query2])).tolist()
+hits2 = client.query_points(collection_name=&quot;lab19&quot;, query=q_vec2, limit=5).points
+
+print(f&quot;Query (paraphrase): {query2!r}&quot;)
+for h in hits2:
+    print(f&quot;  [{h.payload[&#x27;topic&#x27;]:&gt;9}] score={h.score:.3f}  {h.payload[&#x27;title&#x27;]}&quot;)
+assert len(hits2) == 5
+assert all(h.payload[&quot;topic&quot;] == &quot;cloud&quot; for h in hits2), &quot;Paraphrase top-5 is not entirely cloud&quot;
+print(&quot;PASS — indexed 1000 vectors; all five paraphrase hits are in the cloud cluster&quot;)</pre></details><pre>Query (paraphrase): &#x27;phương pháp tự động mở rộng hạ tầng theo lưu lượng người dùng&#x27;
+  [    cloud] score=0.805  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  [    cloud] score=0.805  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  [    cloud] score=0.803  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  [    cloud] score=0.800  Điện toán đám mây: tự động mở rộng theo lưu lượng
+  [    cloud] score=0.800  Điện toán đám mây: tự động mở rộng theo lưu lượng
+PASS — indexed 1000 vectors; all five paraphrase hits are in the cloud cluster
+</pre></section></html>

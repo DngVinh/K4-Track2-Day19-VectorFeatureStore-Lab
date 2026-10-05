@@ -1,0 +1,229 @@
+{
+  "fresh_root": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T040443Z_reproduction_7d5aac",
+  "files": [
+    {
+      "path": ".env.example",
+      "sha256": "0daf9969ff6b7d5f46d9398820c7b08fb6f09667cab90838e3d7354110994bbf"
+    },
+    {
+      "path": "app/__init__.py",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "app/agent.py",
+      "sha256": "666e7aab2a00faeaf5b504c3aad7052e48ea640a3d91f1e823ffb5e658ce561a"
+    },
+    {
+      "path": "app/cache.py",
+      "sha256": "b0864948cfd82830124da56ae757102aa17840432f8d4311cec7a8f9f4569061"
+    },
+    {
+      "path": "app/embeddings.py",
+      "sha256": "fbc205472337e2202bc5a0da64a6876612aaabcb621ff117de6e84c5459a1a38"
+    },
+    {
+      "path": "app/feast_repo/feature_store.yaml",
+      "sha256": "d220931bef7e5132095f049c03ffef91c57e0f5003b8b65c3479d192c3daeb56"
+    },
+    {
+      "path": "app/feast_repo/feature_views.py",
+      "sha256": "9d41a184dd8155d8b8fb5802a8d2168e62a6cb47d5ccaf059a696cf4cc9685dd"
+    },
+    {
+      "path": "app/feast_repo_ondemand/definitions.py",
+      "sha256": "6969eea1ce0c83f6657626f221602b593043978d1461330d59e8e189afcda766"
+    },
+    {
+      "path": "app/feast_repo_ondemand/feature_store.yaml",
+      "sha256": "f89b06dced9bd704d0a7125856dacd0c5198cb9d5fb7801c73e07730094e263f"
+    },
+    {
+      "path": "app/features.py",
+      "sha256": "16a8653d9abc0fcbf48a44192db42fbf97b17a697a4e7a5599fcc5c28bfde065"
+    },
+    {
+      "path": "app/filters.py",
+      "sha256": "f0169ed5e3f8a48dec97187a9d0e7a5439a0912b86c23c402c655f01a3db427f"
+    },
+    {
+      "path": "app/main.py",
+      "sha256": "8d1b602a237666780d83329fbf0421c8d6b68179778a39ca03e3213de829fe56"
+    },
+    {
+      "path": "app/metadata.py",
+      "sha256": "0a046d9e109a744b45c6343b064d3e1149b2480ef5218eac0686be475f13c227"
+    },
+    {
+      "path": "app/search.py",
+      "sha256": "be3fb6026485515d69d41774c82e8f45bc90ccf2260580ef51eff00c41168515"
+    },
+    {
+      "path": "bonus/agent.py",
+      "sha256": "39e5cd046875881c697a73d4cc3ac680840df032147bb36ecca107ddb5636597"
+    },
+    {
+      "path": "bonus/demo.py",
+      "sha256": "e84b1ee77bda34993c398b7ed1ec1bb86ef065b9ca80c126ce3666f86986d10e"
+    },
+    {
+      "path": "Makefile",
+      "sha256": "40fafee6bada4687dc83b386010b122590d7fa4ccebe803d1d9599ed83c0c6bd"
+    },
+    {
+      "path": "notebooks/01_embeddings_index.py",
+      "sha256": "e34fc73b6475507e2a65d13a5033e12d3299614fd14c62e854443270b7b5bcd1"
+    },
+    {
+      "path": "notebooks/02_hybrid_search_rrf.py",
+      "sha256": "bb83f7a050b474bd6b11c63269dc2ad2c81543fb9bac80d1b4aacad6adf8de7b"
+    },
+    {
+      "path": "notebooks/03_search_api_benchmark.py",
+      "sha256": "c329824fdc6121253c2985142de214d44de6ef1a30876fee54ee2ad6cba88fd0"
+    },
+    {
+      "path": "notebooks/04_feast_feature_store.py",
+      "sha256": "fc85ff20d9c89eea6a41a154331a5c23ccb882688ee07c1ead884537209a6f53"
+    },
+    {
+      "path": "notebooks/05_filtered_search.py",
+      "sha256": "124e89e0a704b60edc68cc30c07db766ea31b5c18ad4afc05865da98aea522e6"
+    },
+    {
+      "path": "notebooks/06_agent_retrieval.py",
+      "sha256": "08f2403f994e09238d1617984fda27b7db448712d99e62ad5a8665959a40ca2c"
+    },
+    {
+      "path": "notebooks/07_semantic_cache.py",
+      "sha256": "30eba707ecb0e21e88f563d223d62f452f16c2ca286d935b58bff8a5cc621ae6"
+    },
+    {
+      "path": "notebooks/08_feature_engineering.py",
+      "sha256": "8509316258732eaf1cb69402a27798b5604175a42869677625e90ca0f28107ac"
+    },
+    {
+      "path": "notebooks/_setup.py",
+      "sha256": "346c33b4d849aa146c348bfe3a6e65508f7d3bce4de1c2204dd89e6d30a3b6a9"
+    },
+    {
+      "path": "overrides-py314.txt",
+      "sha256": "1d0c3fd522bd03d64b3069f6f491d6095214daf5bbea691129ae60e920efe853"
+    },
+    {
+      "path": "pyproject.toml",
+      "sha256": "55f2d7022bb91e441a493162937118c9d8c57906c108e7b1a2fa14f8a5b1967e"
+    },
+    {
+      "path": "README.md",
+      "sha256": "2d28812085fbff71f5b93b95ffcde343986a256ff8d91d49c500988aeadd1004"
+    },
+    {
+      "path": "requirements.txt",
+      "sha256": "4f0f8914be56bb41e8a375e84c8c3a67bf17b418b7167cbcbd342fbdc6792732"
+    },
+    {
+      "path": "scripts/audit_search.py",
+      "sha256": "c2a10c7fec610f605df8f08a2f8eeba01c6513f779f6cf3617a02590b4846812"
+    },
+    {
+      "path": "scripts/benchmark.py",
+      "sha256": "883920c9a0f4209e59458b2c96051736b89b42290ee92b08d01afc1cf6f92d78"
+    },
+    {
+      "path": "scripts/capture_evidence.py",
+      "sha256": "98be9e563ac3ca22a9659ca4d2d1318552e25409528aa1b544ce0d95f49f278e"
+    },
+    {
+      "path": "scripts/check_submission.py",
+      "sha256": "de5badcc0c401926d6205972e06778df6539ff27c286534b87902a47d51ab649"
+    },
+    {
+      "path": "scripts/diagnose_corpus.py",
+      "sha256": "e9b30103422081874d83e4d77b8c364a7da4ecab5234d7dfc11b6a98084e3d2c"
+    },
+    {
+      "path": "scripts/fetch_lite_model.py",
+      "sha256": "8e0c25b661aa674a08df6335bc49c9b1e5b920f3d765e3946f96af4a68340fc2"
+    },
+    {
+      "path": "scripts/gen_agent_queries.py",
+      "sha256": "4aca92a569345065f8e6b0cd707b8c258ef8cfed234b8f3c66852f8db245e8b0"
+    },
+    {
+      "path": "scripts/gen_spend.py",
+      "sha256": "d222c1c36be54c05e0a141c65753de22806f2f3b89143a4f6a48807a46d1e314"
+    },
+    {
+      "path": "scripts/portable_make.py",
+      "sha256": "55e5975ceb7d84f5e634d5874e647ea77ca4effc0d2062fed6c5f9a8283d97d0"
+    },
+    {
+      "path": "scripts/prepare_final_evidence.py",
+      "sha256": "cbf103c49e4d8ce5aaeaadc3e14c9257b87936d4e104de2ed925e25f64d0c00c"
+    },
+    {
+      "path": "scripts/record_check.py",
+      "sha256": "f791d540efaf45fd1dee65f562c24d894c738090c1e8f31730a3de5681d00ddc"
+    },
+    {
+      "path": "scripts/run_notebooks.py",
+      "sha256": "c9ca8127ed34988a9c40ab436184e25649ad9dd5977f40e80a2f19371eac6d34"
+    },
+    {
+      "path": "scripts/seed_corpus.py",
+      "sha256": "9934aa573b7ed1816eb85d617846cb4280980a7ac5a8ee467d88eb78693fe004"
+    },
+    {
+      "path": "scripts/verify_docker.py",
+      "sha256": "bf15d78bb5a3ad8d906724bccb02a846c7059cde0ad4997c230d5a197c9aa5a4"
+    },
+    {
+      "path": "scripts/verify_lite.py",
+      "sha256": "360fb6d7a0afc92fe403db2decefe077f0235e1ae283901db8fd22df5cb85757"
+    },
+    {
+      "path": "scripts/verify_reproduction.py",
+      "sha256": "722246a99ffe68241dcfe4a5e64d7409f590f1701066df716059bfac6cc6b389"
+    },
+    {
+      "path": "setup-lite.sh",
+      "sha256": "be53f1ae22abda17613608bee4d5a252a2a5ca5920df5832ed79319b7cac272f"
+    },
+    {
+      "path": "tests/conftest.py",
+      "sha256": "14befca68a0852f4a8bf0fd91e7de6314e8bcba4a21d9d66655ea571cb169d05"
+    },
+    {
+      "path": "tests/test_agent.py",
+      "sha256": "32f341f28184127bb6d2486fb51918309a43d948c5755576406d1ca9ab744197"
+    },
+    {
+      "path": "tests/test_cache.py",
+      "sha256": "c4979e1fd3683c8600ef70257cb36bf0ea3f10ff609dce2f91a361ae3686fbbf"
+    },
+    {
+      "path": "tests/test_embeddings.py",
+      "sha256": "715a38e5accbbfe1a88ea4b9f3ff74b787044dfa705a96dc48b4faebe329def0"
+    },
+    {
+      "path": "tests/test_features.py",
+      "sha256": "0dc679a7b69648858d1f884c4c5274a74293d7359100232f200199fc2e7dc8e4"
+    },
+    {
+      "path": "tests/test_filters.py",
+      "sha256": "9fecfcb25d96622730433e265ff67d4c0a153bbf7d28da56658bdb3edb57522f"
+    },
+    {
+      "path": "tests/test_metadata.py",
+      "sha256": "4e253d6f70306da927cf707fbedf66a4c5c7e18f11aafd94a318a1dec3ef393d"
+    },
+    {
+      "path": "tests/test_submission_contracts.py",
+      "sha256": "91367ac33a0f83f37b924dd22d3fed083c4a5231e5b15369c25e8a30c484cecc"
+    }
+  ],
+  "copied_generated_data": false,
+  "copied_environment_or_cache": false,
+  "installer_package_cache": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T031901Z_reproduction_932328\\.cache\\uv",
+  "model_cache_shared": false
+}

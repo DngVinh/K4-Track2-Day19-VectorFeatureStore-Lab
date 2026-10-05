@@ -1,0 +1,13 @@
+[lite] Day 19 lightweight setup
+[lite] Stack: fastembed + qdrant-client[memory] + rank-bm25 + feast(sqlite) + FastAPI
+
+[lite] system python3 is 3.14 (the venv may differ — reported below)
+[lite] Creating venv with python -m venv
+[lite] venv Python 3.14
+[lite] Python >= 3.14 -> applying dill>=0.4 override (feast's pin is too old; see requirements.txt)
+Collecting uv
+  Downloading uv-0.12.23-py3-none-win_amd64.whl.metadata (11 kB)
+Downloading uv-0.12.23-py3-none-win_amd64.whl (18.1 MB)
+   ---------------------------------------- 18.1/18.1 MB 194.7 kB/s  0:00:47
+Installing collected packages: uv
+Successfully installed uv-0.12.23

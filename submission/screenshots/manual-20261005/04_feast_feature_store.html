@@ -1,0 +1,199 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 04_feast_feature_store</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/04_feast_feature_store.ipynb<br>SHA-256: dcde3e304966e1ab707911f95caa17c0524891def3929d0dac1285fea94b295a</p><nav><ul><li><a href="#cell-3">1. Sinh dữ liệu offline (Parquet) cho 3 feature views · Out[2]</a></li><li><a href="#cell-5">2. `feast apply` — register 3 feature views với metadata registry · Out[3]</a></li><li><a href="#cell-7">3. `feast materialize-incremental` — load offline → online · Out[4]</a></li><li><a href="#cell-9">4. Online lookup — đo latency · Out[5]</a></li><li><a href="#cell-11">5. TODO — Batch latency benchmark (100 lookups, P99) · Out[6]</a></li><li><a href="#cell-13">6. PIT join (offline) — đảm bảo no data leakage · Out[7]</a></li></ul></nav><section id="cell-3"><h2>1. Sinh dữ liệu offline (Parquet) cho 3 feature views · Out[2]</h2><details><summary>Code nguồn</summary><pre>NOW = datetime.now(timezone.utc).replace(microsecond=0)
+
+
+def make_user_profile(n_users: int = 100) -&gt; pl.DataFrame:
+    current = pl.DataFrame({
+        &quot;user_id&quot;: [f&quot;u_{i:03d}&quot; for i in range(n_users)],
+        &quot;reading_speed_wpm&quot;: [180 + (i * 7) % 200 for i in range(n_users)],
+        &quot;preferred_language&quot;: [&quot;vi&quot; if i % 3 != 0 else &quot;en&quot; for i in range(n_users)],
+        &quot;topic_affinity&quot;: [
+            [&quot;ai_ml&quot;, &quot;cloud&quot;, &quot;security&quot;, &quot;database&quot;, &quot;devops&quot;][i % 5]
+            for i in range(n_users)
+        ],
+        &quot;event_timestamp&quot;: [NOW for i in range(n_users)],
+    })
+    previous = current.with_columns(
+        (pl.col(&quot;reading_speed_wpm&quot;) - 10).alias(&quot;reading_speed_wpm&quot;),
+        pl.lit(NOW - timedelta(hours=3)).alias(&quot;event_timestamp&quot;),
+    )
+    return pl.concat([previous, current])
+
+
+def make_item_popularity(n_items: int = 1000) -&gt; pl.DataFrame:
+    corpus = [json.loads(line) for line in
+              (REPO_ROOT / &quot;data&quot; / &quot;corpus_vn.jsonl&quot;).read_text(encoding=&quot;utf-8&quot;).splitlines()]
+    assert len(corpus) == n_items
+    return pl.DataFrame({
+        &quot;doc_id&quot;: [d[&quot;doc_id&quot;] for d in corpus],
+        &quot;click_count_24h&quot;: [(i * 13) % 500 for i in range(n_items)],
+        &quot;ctr_7d&quot;: [round(((i * 7) % 100) / 100.0, 3) for i in range(n_items)],
+        &quot;avg_dwell_seconds&quot;: [10.0 + (i * 0.7) % 90 for i in range(n_items)],
+        &quot;event_timestamp&quot;: [NOW - timedelta(minutes=i % 720) for i in range(n_items)],
+    })
+
+
+def make_query_velocity(n_users: int = 100) -&gt; pl.DataFrame:
+    return pl.DataFrame({
+        &quot;user_id&quot;: [f&quot;u_{i:03d}&quot; for i in range(n_users)],
+        &quot;queries_last_hour&quot;: [(i * 11) % 50 for i in range(n_users)],
+        &quot;distinct_topics_24h&quot;: [1 + (i * 3) % 10 for i in range(n_users)],
+        &quot;event_timestamp&quot;: [NOW - timedelta(minutes=i % 30) for i in range(n_users)],
+    })
+
+
+make_user_profile().write_parquet(FEAST_DATA / &quot;user_profile.parquet&quot;)
+make_item_popularity().write_parquet(FEAST_DATA / &quot;item_popularity.parquet&quot;)
+make_query_velocity().write_parquet(FEAST_DATA / &quot;query_velocity.parquet&quot;)
+print(f&quot;Wrote 3 Parquet sources to {FEAST_DATA}&quot;)
+for p in sorted(FEAST_DATA.glob(&quot;*.parquet&quot;)):
+    print(f&quot;  {p.name}  {p.stat().st_size/1024:.1f} KB&quot;)</pre></details><pre>Wrote 3 Parquet sources to C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.cache\reproduction\20261005T040443Z_reproduction_7d5aac\app\feast_repo\data
+  item_popularity.parquet  12.0 KB
+  query_velocity.parquet  2.3 KB
+  user_profile.parquet  2.7 KB
+</pre></section><section id="cell-5"><h2>2. `feast apply` — register 3 feature views với metadata registry · Out[3]</h2><details><summary>Code nguồn</summary><pre>res = subprocess.run(
+    [sys.executable, &quot;-m&quot;, &quot;feast.cli.cli&quot;, &quot;apply&quot;],
+    cwd=str(FEAST_DIR),
+    capture_output=True, text=True, check=False,
+)
+print(&quot;STDOUT:&quot;)
+print(res.stdout)
+if res.stderr:
+    print(&quot;STDERR:&quot;)
+    print(res.stderr)
+assert res.returncode == 0, f&quot;feast apply failed: {res.stderr}&quot;
+res = subprocess.run([sys.executable, &quot;-m&quot;, &quot;feast.cli.cli&quot;, &quot;feature-views&quot;, &quot;list&quot;], cwd=str(FEAST_DIR),
+                     capture_output=True, text=True, check=True)
+print(res.stdout)
+for name in (&quot;user_profile_features&quot;, &quot;item_popularity_features&quot;, &quot;query_velocity_features&quot;):
+    assert name in res.stdout</pre></details><pre>STDOUT:
+No project found in the repository. Using project name lab19 defined in feature_store.yaml
+Applying changes for project lab19
+Created project lab19
+Created entity item
+Created entity user
+Created feature view user_profile_features
+Created feature view item_popularity_features
+Created feature view query_velocity_features
+
+Created sqlite table lab19_item_popularity_features
+Created sqlite table lab19_query_velocity_features
+Created sqlite table lab19_user_profile_features
+
+
+
+NAME                      ENTITIES    TYPE         ENABLED    STATE
+user_profile_features     {&#x27;user&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+item_popularity_features  {&#x27;item&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+query_velocity_features   {&#x27;user&#x27;}    FeatureView  Yes        STATE_UNSPECIFIED
+
+</pre></section><section id="cell-7"><h2>3. `feast materialize-incremental` — load offline → online · Out[4]</h2><details><summary>Code nguồn</summary><pre>end_dt = NOW.strftime(&quot;%Y-%m-%dT%H:%M:%S&quot;)
+res = subprocess.run(
+    [sys.executable, &quot;-m&quot;, &quot;feast.cli.cli&quot;, &quot;materialize-incremental&quot;, end_dt],
+    cwd=str(FEAST_DIR),
+    capture_output=True, text=True, check=False,
+)
+print(res.stdout[-1500:])
+if res.stderr:
+    print(&quot;STDERR (tail):&quot;)
+    print(res.stderr[-500:])
+assert res.returncode == 0, f&quot;materialize failed: {res.stderr}&quot;</pre></details><pre>Materializing 3 feature views to 2026-10-05 04:14:41+00:00 into the sqlite online store.
+
+user_profile_features from 2026-09-05 04:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+item_popularity_features from 2026-10-04 04:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+query_velocity_features from 2026-10-05 03:14:58+00:00 to 2026-10-05 04:14:41+00:00:
+
+</pre></section><section id="cell-9"><h2>4. Online lookup — đo latency · Out[5]</h2><details><summary>Code nguồn</summary><pre>import time
+
+from feast import FeatureStore
+
+fs = FeatureStore(repo_path=str(FEAST_DIR))
+
+REQUEST_FEATURES = [
+    &quot;user_profile_features:reading_speed_wpm&quot;,
+    &quot;user_profile_features:preferred_language&quot;,
+    &quot;user_profile_features:topic_affinity&quot;,
+    &quot;query_velocity_features:queries_last_hour&quot;,
+    &quot;query_velocity_features:distinct_topics_24h&quot;,
+]
+
+# Single lookup
+t0 = time.perf_counter()
+features = fs.get_online_features(
+    features=REQUEST_FEATURES,
+    entity_rows=[{&quot;user_id&quot;: &quot;u_001&quot;}],
+).to_dict()
+single_latency_ms = (time.perf_counter() - t0) * 1000
+print(f&quot;Single lookup: {single_latency_ms:.2f}ms&quot;)
+print({k: v[0] for k, v in features.items()})
+assert features[&quot;reading_speed_wpm&quot;] == [187]
+assert features[&quot;queries_last_hour&quot;] == [11]
+assert features[&quot;topic_affinity&quot;] == [&quot;cloud&quot;]
+print(&quot;Materialized online entity counts (verified by actual Feast lookups):&quot;)
+corpus_ids = [json.loads(line)[&quot;doc_id&quot;] for line in
+              (REPO_ROOT / &quot;data/corpus_vn.jsonl&quot;).read_text(encoding=&quot;utf-8&quot;).splitlines()]
+for feature, entity_key, entity_ids in (
+    (&quot;user_profile_features:reading_speed_wpm&quot;, &quot;user_id&quot;, [f&quot;u_{i:03d}&quot; for i in range(100)]),
+    (&quot;item_popularity_features:click_count_24h&quot;, &quot;doc_id&quot;, corpus_ids),
+    (&quot;query_velocity_features:queries_last_hour&quot;, &quot;user_id&quot;, [f&quot;u_{i:03d}&quot; for i in range(100)]),
+):
+    values = fs.get_online_features(features=[feature],
+        entity_rows=[{entity_key: entity_id} for entity_id in entity_ids]).to_dict()
+    materialized = sum(value is not None for value in values[feature.split(&quot;:&quot;)[1]])
+    print(f&quot;  {feature.split(&#x27;:&#x27;)[0]}: {materialized} entities&quot;)
+    assert materialized == len(entity_ids)</pre></details><pre>Single lookup: 70.15ms
+{&#x27;user_id&#x27;: &#x27;u_001&#x27;, &#x27;reading_speed_wpm&#x27;: 187, &#x27;preferred_language&#x27;: &#x27;vi&#x27;, &#x27;topic_affinity&#x27;: &#x27;cloud&#x27;, &#x27;queries_last_hour&#x27;: 11, &#x27;distinct_topics_24h&#x27;: 4}
+Materialized online entity counts (verified by actual Feast lookups):
+  user_profile_features: 100 entities
+  item_popularity_features: 1000 entities
+  query_velocity_features: 100 entities
+</pre></section><section id="cell-11"><h2>5. TODO — Batch latency benchmark (100 lookups, P99) · Out[6]</h2><details><summary>Code nguồn</summary><pre>latencies: list[float] = []
+for i in range(100):
+    user_id = f&quot;u_{i:03d}&quot;
+    t0 = time.perf_counter()
+    fs.get_online_features(
+        features=REQUEST_FEATURES,
+        entity_rows=[{&quot;user_id&quot;: user_id}],
+    ).to_dict()
+    latencies.append((time.perf_counter() - t0) * 1000)
+
+latencies.sort()
+p50 = latencies[50]
+p95 = latencies[95]
+p99 = latencies[99]
+print(f&quot;Online lookup latency over 100 calls:&quot;)
+print(f&quot;  P50 = {p50:.2f}ms&quot;)
+print(f&quot;  P95 = {p95:.2f}ms&quot;)
+print(f&quot;  P99 = {p99:.2f}ms&quot;)
+
+if p99 &lt; 10:
+    print(f&quot;PASS — online lookup P99 &lt; 10ms ({p99:.2f}ms)&quot;)
+else:
+    print(f&quot;WARN — P99 = {p99:.2f}ms (SQLite trên macOS thường tốt hơn 5ms; Linux thường tốt hơn 1ms)&quot;)</pre></details><pre>Online lookup latency over 100 calls:
+  P50 = 0.42ms
+  P95 = 0.54ms
+  P99 = 0.65ms
+PASS — online lookup P99 &lt; 10ms (0.65ms)
+</pre></section><section id="cell-13"><h2>6. PIT join (offline) — đảm bảo no data leakage · Out[7]</h2><details><summary>Code nguồn</summary><pre>import pandas as pd
+entity_df = pd.DataFrame({
+    &quot;user_id&quot;: [&quot;u_001&quot;, &quot;u_002&quot;, &quot;u_003&quot;],
+    &quot;event_timestamp&quot;: [NOW - timedelta(hours=2), NOW - timedelta(hours=1), NOW],
+})
+
+historical = fs.get_historical_features(
+    entity_df=entity_df,
+    features=[
+        &quot;user_profile_features:reading_speed_wpm&quot;,
+        &quot;user_profile_features:topic_affinity&quot;,
+    ],
+).to_df()
+print(historical)
+assert len(historical) == 3
+speeds = historical.set_index(&quot;user_id&quot;)[&quot;reading_speed_wpm&quot;].to_dict()
+assert speeds == {&quot;u_001&quot;: 177, &quot;u_002&quot;: 184, &quot;u_003&quot;: 201}, speeds
+print(&quot;PASS — PIT values match the latest snapshot at or before each event; future values excluded&quot;)
+assert p99 &lt; 10, f&quot;Online lookup P99 {p99:.2f}ms exceeds 10ms&quot;</pre></details><pre>  user_id           event_timestamp  reading_speed_wpm topic_affinity
+0   u_001 2026-10-05 02:14:41+00:00                177          cloud
+1   u_002 2026-10-05 03:14:41+00:00                184       security
+2   u_003 2026-10-05 04:14:41+00:00                201       database
+PASS — PIT values match the latest snapshot at or before each event; future values excluded
+</pre></section></html>

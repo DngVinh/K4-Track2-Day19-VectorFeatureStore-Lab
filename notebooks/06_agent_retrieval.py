@@ -85,7 +85,10 @@ BUDGET = 16
 def evaluate(agent, label):
     rec, bal, calls, ms = [], [], [], []
     for q in queries:
+        plan = agent.planner.plan(q["question"])
+        assert sum(args.top_k for args in plan) == BUDGET
         r = agent.answer(q["question"])
+        assert sum(len(c.doc_ids) for c in r.trace) <= BUDGET
         truth, got = set(q["relevant_doc_ids"]), set(r.doc_ids)
         rec.append(len(truth & got) / len(truth))
         a, b = len(set(q["gold_a"]) & got), len(set(q["gold_b"]) & got)
@@ -94,7 +97,7 @@ def evaluate(agent, label):
         ms.append(r.latency_ms)
     n = len(queries)
     print(f"{label:<14}{sum(rec)/n:8.3f}{sum(bal)/n:9.2f}{sum(calls)/n:8.1f}{sum(ms)/n:9.1f}")
-    return sum(rec) / n
+    return {"recall": sum(rec) / n, "balance": sum(bal) / n}
 
 
 print(f"{'strategy':<20}{'recall':>8}{'balance':>9}{'calls':>8}{'ms':>9}")
@@ -103,7 +106,12 @@ split = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=False))
                  "agentic (no filter)")
 filt = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=True)),
                 "agentic (+filter)")
-print(f"\nΔ recall vs single-shot:  tách câu {split - base:+.3f}   tách + filter {filt - base:+.3f}")
+print(f"\nΔ recall vs single-shot:  tách câu {split['recall'] - base['recall']:+.3f}   "
+      f"tách + filter {filt['recall'] - base['recall']:+.3f}")
+assert split["recall"] > base["recall"]
+assert split["balance"] > base["balance"]
+assert split["recall"] > filt["recall"]
+print("PASS — agentic improves recall and balance at the same 16-document retrieval budget")
 
 # %% [markdown]
 # **Đọc kết quả.** `balance` của single-shot rất thấp: nó gần như chỉ lấy *một*
@@ -178,6 +186,8 @@ print("features   :", ctx["features"] or "(chưa có — chạy NB4 trước)")
 print("affinity   :", ctx["affinity_used"])
 print("tool_args  :", ctx["tool_args"])
 print("doc_ids    :", ctx["doc_ids"][:5], "…")
+assert ctx["features"].get("topic_affinity") == ["cloud"], "Run NB4 first for real Feast features"
+assert ctx["doc_ids"]
 
 # %% [markdown]
 # ## Deliverable evidence

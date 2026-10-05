@@ -184,15 +184,16 @@ class RuleBasedPlanner:
             parts = [question]
         # Fair comparison: the total number of retrieved documents is the same
         # as the single-shot baseline, just split across sub-questions.
-        per = max(1, self.budget // len(parts))
+        parts = parts[:self.budget]
+        per, extra = divmod(self.budget, len(parts))
         return [
             ToolArgs(
                 query=p,
                 topic=self.detect_topic(p) if self.use_filters else None,
                 since_year=self.detect_year(p) if self.use_filters else None,
-                top_k=per,
+                top_k=per + (i < extra),
             )
-            for p in parts
+            for i, p in enumerate(parts)
         ]
 
 

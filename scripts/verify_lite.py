@@ -8,6 +8,7 @@ Exit code 0 on success; non-zero on first failure.
 from __future__ import annotations
 
 import sys
+import os
 import traceback
 from pathlib import Path
 
@@ -24,7 +25,8 @@ def main() -> int:
         # ── 1. fastembed ────────────────────────────────────────────────
         step("fastembed loads + embeds (BAAI/bge-small-en-v1.5)")
         from fastembed import TextEmbedding
-        emb_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
+        cache = os.getenv("FASTEMBED_CACHE_PATH") or str(ROOT / ".cache/fastembed")
+        emb_model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5", cache_dir=cache)
         sample = list(emb_model.embed(["cloud computing tiếng Việt"]))
         assert len(sample) == 1 and len(sample[0]) == 384, f"unexpected vector shape: {len(sample[0])}"
 

@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
+os.environ.setdefault("FASTEMBED_CACHE_PATH", str(_REPO_ROOT / ".cache" / "fastembed"))
+os.environ.setdefault("HF_HOME", str(_REPO_ROOT / ".cache" / "huggingface"))
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 

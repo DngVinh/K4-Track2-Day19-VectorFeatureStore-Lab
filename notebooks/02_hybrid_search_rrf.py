@@ -134,7 +134,7 @@ doc_topic = {d["doc_id"]: d["topic"] for d in docs}
 def precision_at_10(retrieved_ids: list[str], target_topic: str) -> float:
     if not retrieved_ids:
         return 0.0
-    return sum(1 for d in retrieved_ids if doc_topic.get(d) == target_topic) / len(retrieved_ids)
+    return sum(1 for d in retrieved_ids[:10] if doc_topic.get(d) == target_topic) / 10
 
 
 p_kw, p_sem, p_hyb = [], [], []
@@ -170,6 +170,117 @@ for t in ("exact", "paraphrase", "mixed"):
           f"{statistics.mean(m['kw']):>6.1%} "
           f"{statistics.mean(m['sem']):>6.1%} "
           f"{statistics.mean(m['hyb']):>6.1%}")
+assert len(golden) == 50
+assert statistics.mean(p_hyb) > statistics.mean(p_kw)
+assert statistics.mean(p_hyb) > statistics.mean(p_sem)
+assert statistics.mean(by_type["mixed"]["hyb"]) >= max(
+    statistics.mean(by_type["mixed"]["kw"]), statistics.mean(by_type["mixed"]["sem"]))
+print("PASS — hybrid beats both baselines overall; mixed-slice comparison verified")
+
+# %% [markdown]
+# ## 6. Kiểm chứng tiêu chí paraphrase bằng model đa ngữ
+#
+# BGE-small ở trên là baseline Lite bắt buộc, giữ nguyên kết quả thực đo.
+# Model tiếng Anh không bảo đảm Vector thắng BM25 trên câu tiếng Việt.
+# Thí nghiệm thứ hai dùng MiniLM đa ngữ 384 chiều, hỗ trợ sẵn trong FastEmbed.
+# Giữ nguyên toàn bộ corpus, 50 query, ground truth, BM25, top-50, RRF k=60
+# và Precision@10; chỉ thay model embedding. Đây là so sánh riêng có nhãn,
+# không trộn điểm của hai model hay thay query để đạt rubric.
+# Lần chạy đầu cần tải thêm khoảng 235 MB; có thể prefetch bằng
+# `python scripts/fetch_lite_model.py --multilingual`.
+
+# %%
+MULTILINGUAL_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+multi_embedder = TextEmbedding(model_name=MULTILINGUAL_MODEL)
+multi_client = QdrantClient(":memory:")
+multi_client.create_collection(collection_name="lab19_multilingual",
+    vectors_config=VectorParams(size=384, distance=Distance.COSINE))
+for start in range(0, len(docs), BATCH):
+    batch = docs[start:start + BATCH]
+    vectors = list(multi_embedder.embed([d["title"] + " " + d["text"] for d in batch]))
+    multi_client.upsert(collection_name="lab19_multilingual", points=[
+        PointStruct(id=start + i, vector=vector.tolist(), payload={"doc_id": doc["doc_id"]})
+        for i, (doc, vector) in enumerate(zip(batch, vectors))])
+assert multi_client.count("lab19_multilingual").count == 1000
+multi_sem, multi_hyb = [], []
+for q in golden:
+    vector = next(multi_embedder.embed([q["query"]])).tolist()
+    dense = [point.payload["doc_id"] for point in multi_client.query_points(
+        collection_name="lab19_multilingual", query=vector, limit=50).points]
+    sparse = search_keyword(q["query"], 50)
+    scores = {}
+    for ranked in (sparse, dense):
+        for rank, doc_id in enumerate(ranked, start=1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1 / (60 + rank)
+    fused = [doc_id for doc_id, _ in sorted(scores.items(), key=lambda pair: -pair[1])[:10]]
+    multi_sem.append(precision_at_10(dense[:10], q["topic"]))
+    multi_hyb.append(precision_at_10(fused, q["topic"]))
+print(f"Multilingual experiment: {MULTILINGUAL_MODEL}")
+print("Same 1000 documents / 50 queries / BM25 / RRF k=60 / top-50 / Precision@10")
+print(f"Overall: keyword={statistics.mean(p_kw):.1%}, semantic={statistics.mean(multi_sem):.1%}, "
+      f"hybrid={statistics.mean(multi_hyb):.1%}")
+print(f"  {'type':12} {'n':>3} {'kw':>7} {'sem':>7} {'hyb':>7}")
+multi_slices = {}
+for kind in ("exact", "paraphrase", "mixed"):
+    subset = [i for i, q in enumerate(golden) if q["mode_hint"] == kind]
+    values = [statistics.mean([mode[i] for i in subset]) for mode in (p_kw, multi_sem, multi_hyb)]
+    multi_slices[kind] = values
+    print(f"  {kind:12} {len(subset):>3} {values[0]:>6.1%} {values[1]:>6.1%} {values[2]:>6.1%}")
+assert multi_slices["paraphrase"][1] > multi_slices["paraphrase"][0]
+assert statistics.mean(multi_hyb) > statistics.mean(p_kw)
+assert statistics.mean(multi_hyb) > statistics.mean(multi_sem)
+print("PASS — multilingual vector wins paraphrase; hybrid beats both baselines overall at unchanged RRF settings")
+print(f"Tradeoff on mixed: multilingual hybrid={multi_slices['mixed'][2]:.1%}, "
+      f"BM25={multi_slices['mixed'][0]:.1%}; BGE-small hybrid above achieved 100.0%.")
+print("Model choice changes the slice winners. Keep both measured tables; do not assume a universal winner.")
+
+# %% [markdown]
+# ### Đối chiếu thêm: vector kết hợp hai model với trọng số cố định 50/50
+#
+# BGE và MiniLM có thế mạnh khác nhau. Ghép hai vector đã chuẩn hóa, chia
+# sqrt(2), tạo vector 768 chiều; cosine chính là trung bình hai cosine.
+# Trọng số 50/50 được cố định, không học từ golden set. BM25 và RRF vẫn là
+# hai retriever, với cùng k=60/top-50. Tái sử dụng vector corpus đã tính,
+# không embed lại, không dùng nhãn topic để tạo vector hay xếp hạng.
+
+# %%
+import numpy as np
+base_points, _ = client.scroll("lab19", limit=1000, with_vectors=True)
+multi_points, _ = multi_client.scroll("lab19_multilingual", limit=1000, with_vectors=True)
+base_points = sorted(base_points, key=lambda point: point.id)
+multi_points = sorted(multi_points, key=lambda point: point.id)
+assert [p.payload["doc_id"] for p in base_points] == [p.payload["doc_id"] for p in multi_points]
+combined_vectors = np.concatenate([
+    np.asarray([p.vector for p in base_points]), np.asarray([p.vector for p in multi_points])], axis=1) / np.sqrt(2)
+ensemble_client = QdrantClient(":memory:")
+ensemble_client.create_collection("lab19_ensemble",
+    vectors_config=VectorParams(size=768, distance=Distance.COSINE))
+ensemble_client.upsert("lab19_ensemble", points=[PointStruct(id=i, vector=vector.tolist(),
+    payload={"doc_id": docs[i]["doc_id"]}) for i, vector in enumerate(combined_vectors)])
+ensemble_sem, ensemble_hyb = [], []
+for q in golden:
+    bge = next(embedder.embed([q["query"]]))
+    multilingual = next(multi_embedder.embed([q["query"]]))
+    query_vector = np.concatenate([bge, multilingual]) / np.sqrt(2)
+    dense = [p.payload["doc_id"] for p in ensemble_client.query_points(
+        "lab19_ensemble", query=query_vector.tolist(), limit=50).points]
+    scores = {}
+    for ranked in (search_keyword(q["query"], 50), dense):
+        for rank, doc_id in enumerate(ranked, start=1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1 / (60 + rank)
+    fused = [doc_id for doc_id, _ in sorted(scores.items(), key=lambda pair: -pair[1])[:10]]
+    ensemble_sem.append(precision_at_10(dense[:10], q["topic"]))
+    ensemble_hyb.append(precision_at_10(fused, q["topic"]))
+print("Fixed 50/50 BGE + multilingual vector ensemble (768 dimensions; not the Lite API backend)")
+print(f"Overall: keyword={statistics.mean(p_kw):.1%}, semantic={statistics.mean(ensemble_sem):.1%}, "
+      f"hybrid={statistics.mean(ensemble_hyb):.1%}")
+ensemble_slices = {}
+for kind in ("exact", "paraphrase", "mixed"):
+    subset = [i for i, q in enumerate(golden) if q["mode_hint"] == kind]
+    values = [statistics.mean([mode[i] for i in subset]) for mode in (p_kw, ensemble_sem, ensemble_hyb)]
+    ensemble_slices[kind] = values
+    print(f"  {kind:12} {len(subset):>3} {values[0]:>6.1%} {values[1]:>6.1%} {values[2]:>6.1%}")
+print("Measured tradeoff: twice the document vector storage and two query embeddings; API latency above uses BGE only.")
 
 # %% [markdown]
 # ### Diễn giải kết quả
@@ -179,15 +290,35 @@ for t in ("exact", "paraphrase", "mixed"):
 # - `paraphrase` queries dùng từ Việt **không** xuất hiện verbatim trong docs
 #   → cả BM25 và vector đều giảm điểm. Trên synthetic corpus 1000-doc với
 #   embedding model `BAAI/bge-small-en-v1.5` (English-trained), semantic
-#   recall trên Vietnamese paraphrases yếu (24-32%). **Đổi sang `bge-m3`
-#   (full Docker path) sẽ giúp semantic thắng paraphrase queries** — đây là
-#   teaching moment cho "embedding model choice matters".
+#   precision trên Vietnamese paraphrases yếu. Model đa ngữ là giả thuyết
+#   cần kiểm chứng, không phải bảo đảm Vector thắng toàn bộ lát cắt.
 # - `mixed` queries có cả từ exact + ý tưởng paraphrased → **hybrid thắng rõ**
 #   (~100% vs 97-98% pure modes). Đây là pattern production-relevant nhất
 #   vì user thật ít khi viết query 100% exact term hoặc 100% paraphrase.
 #
-# Hybrid thắng *trung bình* nhờ robust trên mọi kiểu query — đó là lý do
-# production luôn default hybrid (deck §3, slide "Hybrid Search Mechanics").
+# Hybrid thắng trung bình trong cấu hình BGE đã đo; không suy diễn rằng nó
+# thắng ở mọi loại query hoặc mọi phân bố production.
+
+# %% [markdown]
+# ## 7. Audit preprocessing với các cấu hình cố định
+#
+# Bốn ablation được khai báo trước trong `scripts/audit_search.py`: bản gốc,
+# query instruction theo model card BGE, NFC/dấu câu cho BM25, và kết hợp.
+# Giữ BGE-small, corpus, golden set, top-50, k=60 và rank 1-based. Ranking
+# nhận duy nhất query text; chỉ đọc nhãn đánh giá sau khi đã đóng băng mọi
+# ranking. Không chọn cấu hình tự động hoặc dò trọng số từ golden set.
+# Đây là diagnostic trên golden đã biết, không phải đánh giá held-out.
+#
+# Tham khảo: https://huggingface.co/BAAI/bge-small-en-v1.5
+# FastEmbed 0.8.1 không tự thêm instruction BGE trong `query_embed()`.
+
+# %%
+from scripts.audit_search import evaluate as audit_preprocessing
+preprocessing_audit = audit_preprocessing()
+baseline_checks = preprocessing_audit["configs"]["original"]["criteria"]
+print("BGE required configuration rubric status:", baseline_checks)
+print("UNMET — vector does not win paraphrase; the 5-point slice criterion remains incomplete.")
+print("Baseline retained; alternative configurations are diagnostics, not a combined submission result.")
 
 # %% [markdown]
 # ## Deliverable evidence

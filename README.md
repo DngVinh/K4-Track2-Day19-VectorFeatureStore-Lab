@@ -7,7 +7,7 @@ Build hybrid search API + Feast feature store hoàn chỉnh, đo Precision@10 v�
 
 | Path | Stack | Setup | RAM | Khi nào dùng |
 |---|---|---|---|---|
-| **Lite (default)** | `fastembed` + Qdrant in-memory + SQLite Feast + FastAPI | `bash setup-lite.sh` (~60 s) | ~700 MB | Hầu hết học viên — laptop yếu, không Docker, focus vào concept |
+| **Lite (default)** | `fastembed` + Qdrant in-memory + SQLite Feast + FastAPI | `bash setup-lite.sh` (phụ thuộc tải dependency/model) | ~700 MB | Hầu hết học viên — laptop yếu, không Docker, focus vào concept |
 | **Docker (full)** | Qdrant server + Redis + Postgres + **bge-m3** (1024d, đa ngữ) | `bash setup-docker.sh` (~3-8 min) | ~6 GB | Muốn stack production thật + embedding tốt cho tiếng Việt |
 
 > Cả hai paths dùng **cùng `qdrant-client` API và Feast definitions** — bạn có
@@ -17,8 +17,10 @@ Build hybrid search API + Feast feature store hoàn chỉnh, đo Precision@10 v�
 > giữa `fastembed` (bge-small, 384d, tiếng Anh — mặc định lite),
 > `multilingual` (e5-large, 1024d), `bge-m3` (1024d, mặc định của path Docker)
 > và `openai` (1536d). Đây chính là bài học ở NB2: bge-small yếu trên câu hỏi
-> tiếng Việt diễn đạt lại; đổi sang bge-m3 rồi chạy lại NB2 để **tự đo** mức
-> cải thiện. Đổi model = đổi số chiều = **phải index lại**.
+> tiếng Việt diễn đạt lại. API/benchmark đọc biến môi trường thực;
+> NB1/NB2 cố định BGE-small theo đề và NB2 có thí nghiệm riêng có nhãn.
+> `.env` chỉ là scaffold, chưa được tự load: phải export biến vào process.
+> Đổi model = đổi số chiều = **phải index lại** trong môi trường riêng.
 
 ---
 
@@ -27,13 +29,66 @@ Build hybrid search API + Feast feature store hoàn chỉnh, đo Precision@10 v�
 ```bash
 git clone https://github.com/<your-username>/K4-Track2-Day19-VectorFeatureStore-Lab.git
 cd K4-Track2-Day19-VectorFeatureStore-Lab
-bash setup-lite.sh    # ~60 s — venv + deps + seed corpus + smoke test
+bash setup-lite.sh    # venv + deps + seed + smoke; lượt đầu phải tải dependency/model
 make api &            # FastAPI on :8000
 make benchmark        # Precision@10 + latency table
 make lab              # Jupyter Lab on :8888
 ```
 
 Yêu cầu: **Python 3.10–3.14**. Không cần Docker, không cần GPU, không cần OpenAI key.
+
+### Windows PowerShell
+
+```powershell
+.\setup-windows.ps1
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe scripts/run_notebooks.py
+.\.venv\Scripts\python.exe bonus/demo.py
+```
+
+Runner chạy đủ NB1–NB8 bằng kernel trong `.venv`, giữ output và log trong
+`submission/runs/` với thư mục mới cho mỗi lần chạy. NB3 chọn một cổng local
+còn trống và warmup 10 request mỗi mode trước khi đo 100 request mỗi mode.
+NB4 kiểm tra PIT join bằng hai snapshot có giá trị khác nhau. Bonus cần NB4
+đã materialize. Notebook cũ được bảo toàn; manifest trong
+`submission/FINAL_EVIDENCE.json` chọn output cuối cùng khớp nguồn hiện tại.
+Xem `submission/VALIDATION.md` cho kết quả và giới hạn theo rubric.
+Screenshot bài nộp dùng bộ 8 ảnh trong
+[`CURRENT_SCREENSHOTS.html`](submission/screenshots/CURRENT_SCREENSHOTS.html),
+đã đối chiếu output cuối; ảnh render được người dùng chấp nhận làm screenshot.
+Manifest ghi rõ ảnh nào đã làm lại và ảnh nào giữ nguyên, cùng đường dẫn
+chính xác của từng ảnh dùng để nộp.
+
+### Kiểm chứng từ môi trường mới bằng Git Bash + GNU Make trên Windows
+
+```powershell
+.\.venv\Scripts\python.exe scripts/portable_make.py
+.\.venv\Scripts\python.exe scripts/verify_reproduction.py --notebooks
+```
+
+Runner tạo bản sao allowlist trong `.cache/reproduction/`, không sao chép
+`.venv`, caches, Git metadata, dữ liệu sinh sẵn hoặc credentials. Gói GNU
+Make lấy từ MSYS2, kiểm tra SHA-256, chỉ lưu trong workspace. Runner chạy
+nguyên lệnh `bash setup-lite.sh && make benchmark`, `make test`,
+`make verify-lite`; stdout, stderr, exit code, phiên bản và hash dữ liệu
+ở `submission/runs/*_reproduction_*/`. Không chạy các target cleanup.
+Tải dependency/model mới có thể mất nhiều phút. Xem kết quả thực trong
+VALIDATION; một log setup thất bại không được tính là tái lập thành công.
+
+FastEmbed trong API/benchmark dùng một thread ONNX để ổn định tail latency
+trên máy kiểm chứng; batch indexing chậm hơn cấu hình thread tự động.
+Không đổi model, corpus, ranking, RRF hay số call để đạt latency.
+Nếu muốn tái dùng wheel đã tải trong cùng workspace, runner nhận
+`--package-cache <đường-dẫn-cache-uv-trong-workspace>` và ghi rõ nguồn cache.
+Venv, model cache, dữ liệu và registry vẫn tạo mới; không sao chép môi trường cũ.
+
+NB2 giữ baseline BGE-small và bổ sung thí nghiệm MiniLM đa ngữ 384 chiều,
+trên cùng corpus/query/RRF. Lần đầu tải thêm model khoảng 235 MB và tokenizer
+khoảng 17 MB. Có thể tải trước bằng
+`python scripts/fetch_lite_model.py --multilingual`. Hai bảng được giữ riêng:
+Vector đa ngữ thắng paraphrase, còn BGE Hybrid tốt hơn trên mixed trong lần đo.
+Windows dùng PyArrow 24.0.0 vì DLL Parquet của bản 25 bị Application Control
+chặn trên máy kiểm chứng; không thay đổi chính sách bảo vệ Windows.
 
 > **Python 3.14:** `pyarrow` được nới lên `<26` (bản `<22` không có wheel cho
 > 3.14 nên pip cố build từ nguồn và hỏng). Ngoài ra feast pin `dill~=0.3.0`
@@ -54,7 +109,7 @@ make seed            Both: regenerate data/ files
 make api             Lite: FastAPI on :8000
 make lab             Lite: Jupyter Lab on :8888
 make benchmark       Both: Precision@10 + P99 latency table
-make test            Both: pytest (34 tests, ~2 s)
+make test            Both: pytest (45 tests in this submission; runtime depends on machine)
 make gen-advanced    Both: regenerate NB6 compound queries + NB8 spend parquet
 make notebooks       Both: execute ALL notebooks headless (what the grader runs)
 make clean-lite      Lite: wipe venv + data + Feast registry
@@ -216,7 +271,7 @@ học viên cũng được. Full brief + self-checklist:
 ├── requirements-full.txt           # docker extras
 ├── pyproject.toml                  # for `uv` users
 ├── .env.example                    # env template
-├── notebooks/                      # 4 Jupytext .py files (source of truth)
+├── notebooks/                      # 8 Jupytext .py files (source of truth)
 │   ├── _setup.py
 │   ├── 01_embeddings_index.py
 │   ├── 02_hybrid_search_rrf.py
@@ -245,12 +300,12 @@ học viên cũng được. Full brief + self-checklist:
 
 | Triệu chứng | Fix |
 |---|---|
-| `setup-lite.sh` báo `python3: command not found` | Install Python 3.10+ (https://www.python.org/downloads/) |
+| `setup-lite.sh` không tìm thấy Python | Script nhận `python3` hoặc `python`; kiểm tra PATH cho Python ≥3.10 |
 | `make api` → port 8000 in use | `lsof -ti:8000 \| xargs kill -9` hoặc đổi `--port 8001` |
 | NB1 báo `expected 1000 indexed, got X` | Chưa `make seed`; chạy lại |
-| NB2 hybrid không thắng | Check RRF công thức: `1/(k + rank)` **rank 1-based**, không phải 0-based |
+| NB2 hybrid không thắng | Kiểm tra RRF rank 1-based và tính phù hợp của model; công thức đúng không bảo đảm chất lượng thắng |
 | NB3 P99 > 50ms | Bình thường ở cold start. Chạy 10 query warmup trước rồi đo lại. |
-| NB4 `feast apply` lỗi | Xoá `app/feast_repo/registry.db` và chạy lại |
+| NB4 `feast apply` lỗi | Giữ registry/log; chạy kiểm chứng trong thư mục mới bằng `scripts/verify_reproduction.py --notebooks` |
 | Docker path: `port 6333 already allocated` | `docker compose down` rồi `docker compose up -d` |
 | Docker path: Qdrant timeout | Đợi 60s sau `docker compose up`; image lần đầu pull ~200MB |
 

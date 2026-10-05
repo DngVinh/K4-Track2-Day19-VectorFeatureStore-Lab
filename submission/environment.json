@@ -1,0 +1,40 @@
+{
+  "python": "3.14.7",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "packages": {
+    "qdrant-client": "1.19.1",
+    "fastembed": "0.8.1",
+    "rank-bm25": "0.2.2",
+    "feast": "0.66.0",
+    "fastapi": "0.142.2",
+    "uvicorn": "0.54.0",
+    "numpy": "2.5.3",
+    "pandas": "2.3.3",
+    "polars": "1.44.2",
+    "pyarrow": "24.0.0",
+    "dill": "0.4.1",
+    "jupytext": "1.19.6",
+    "nbclient": "0.11.0",
+    "pytest": "8.4.2"
+  },
+  "path": "Lite",
+  "final_inference": {
+    "app_fastembed_onnx_threads": 1,
+    "raw_notebook_fastembed_threads": "library default in unchanged NB1/NB2/NB7",
+    "ranking_changed": false
+  },
+  "reproduction_run": "submission/runs/20261005T040443Z_reproduction_7d5aac",
+  "reproduction_environment": "submission/runs/20261005T040443Z_reproduction_7d5aac/environment.stdout.txt",
+  "reproduction_installer_cache": "Wheels downloaded in this task's earlier isolated run; no venv/model/data/Git/credential copy",
+  "final_notebook_manifest": "submission/FINAL_EVIDENCE.json",
+  "original_environment_preserved": true,
+  "seed": 42,
+  "data_sha256": {
+    "data/corpus_vn.jsonl": "30241d917aed9f2a4ed5d2bf3603c3e90c89fe8c86568397d1e8e37f9997e15a",
+    "data/golden_set.jsonl": "70e0a9cd658ef8d319d0e147f76ae480bb5abde0239ab2c57bee997589762ebc"
+  },
+  "model_revisions": {
+    "models--Qdrant--bge-small-en-v1.5-onnx-Q": "aa8f8b060edb00e03bfdd08813a2949946c8ba55",
+    "models--qdrant--paraphrase-multilingual-MiniLM-L12-v2-onnx-Q": "faf4aa4225822f3bc6376869cb1164e8e3feedd0"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "command": [
+    "C:\\Program Files\\Git\\bin\\bash.exe",
+    "--noprofile",
+    "--norc",
+    "-c",
+    "bash setup-lite.sh && make benchmark"
+  ],
+  "cwd": "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.cache\\reproduction\\20261005T034821Z_reproduction_dcbce5",
+  "started_utc": "2026-10-05T03:48:21.506821+00:00",
+  "finished_utc": "2026-10-05T03:55:13.660426+00:00",
+  "exit_code": 2,
+  "stdout": "setup_benchmark.stdout.txt",
+  "stderr": "setup_benchmark.stderr.txt"
+}

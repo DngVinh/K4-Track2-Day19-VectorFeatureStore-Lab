@@ -1,0 +1,120 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 08_feature_engineering</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/08_feature_engineering.ipynb<br>SHA-256: 2786ef4b49f2beaa6cd91b0bddebd9dc947882aab928f8e466fb5ee93f393d1c</p><nav><ul><li><a href="#cell-3">1. Event log · Out[2]</a></li><li><a href="#cell-5">2. Bốn họ đầu — tính **nhân quả** · Out[3]</a></li><li><a href="#cell-7">Họ 6 — embedding làm feature · Out[4]</a></li><li><a href="#cell-9">3. Feature trung thực trông như thế nào? · Out[5]</a></li><li><a href="#cell-11">4. Rò rỉ #1 — target encoding · Out[6]</a></li><li><a href="#cell-14">5. Rò rỉ #2 — join &quot;giá trị mới nhất&quot; thay vì point-in-time · Out[7]</a></li><li><a href="#cell-17">6. On-demand feature: công thức không thể materialize · Out[8]</a></li><li><a href="#cell-18">6. On-demand feature: công thức không thể materialize · Out[9]</a></li></ul></nav><section id="cell-3"><h2>1. Event log · Out[2]</h2><details><summary>Code nguồn</summary><pre>events = generate_events(n_users=200, n_days=30, seed=42)
+print(f&quot;events   : {len(events)}&quot;)
+print(f&quot;users    : {events.user_id.nunique()}&quot;)
+print(f&quot;sessions : {events.session_id.nunique()}  (~{len(events)/events.session_id.nunique():.1f} event/session)&quot;)
+print(f&quot;click rate: {events.clicked.mean():.3f}&quot;)
+events.head(3)</pre></details><pre>events   : 9019
+users    : 200
+sessions : 8141  (~1.1 event/session)
+click rate: 0.569
+
+  user_id                     event_timestamp       topic  session_id  \
+0   u_048 2026-07-01 00:00:34.132897690+00:00  networking  s_048_0000   
+1   u_080 2026-07-01 00:02:11.225255095+00:00    data_eng  s_080_0000   
+2   u_093 2026-07-01 00:04:41.999966662+00:00       cloud  s_093_0000   
+
+   query_len  results_shown  clicked  
+0         10             15        0  
+1         23             12        0  
+2         16             13        1  </pre></section><section id="cell-5"><h2>2. Bốn họ đầu — tính **nhân quả** · Out[3]</h2><details><summary>Code nguồn</summary><pre>feat = window_aggregates(events)
+cols = [&quot;searches_1h&quot;, &quot;searches_24h&quot;, &quot;searches_7d&quot;,
+        &quot;query_len_vs_user_avg&quot;, &quot;query_len_delta&quot;, &quot;seconds_since_last&quot;]
+print(feat[cols].describe().loc[[&quot;mean&quot;, &quot;50%&quot;, &quot;max&quot;]].round(2).to_string())</pre></details><pre>      searches_1h  searches_24h  searches_7d  query_len_vs_user_avg  query_len_delta  seconds_since_last
+mean         0.07          1.69        10.66                   1.03            -0.01            55695.74
+50%          0.00          1.00        11.00                   1.01             0.00            34931.18
+max          2.00         10.00        31.00                   8.00            21.00           888567.46
+</pre></section><section id="cell-7"><h2>Họ 6 — embedding làm feature · Out[4]</h2><details><summary>Code nguồn</summary><pre>from app.embeddings import Embedder
+feature_embedder = Embedder(&quot;fastembed&quot;)
+texts = [&quot;Kubernetes autoscaling cloud&quot;, &quot;OAuth TLS security&quot;, &quot;PostgreSQL database&quot;]
+embedding_features = np.asarray(list(feature_embedder.embed(texts)))
+prototype = next(feature_embedder.embed([&quot;cloud computing infrastructure&quot;]))
+cosine_features = (embedding_features @ prototype) / (
+    np.linalg.norm(embedding_features, axis=1) * np.linalg.norm(prototype))
+print(&quot;Embedding feature matrix:&quot;, embedding_features.shape)
+for text, vector, cosine in zip(texts, embedding_features, cosine_features):
+    print(f&quot;{text}: norm={np.linalg.norm(vector):.3f}, cloud_similarity={cosine:.3f}, first4={vector[:4].tolist()}&quot;)
+assert embedding_features.shape == (3, 384)</pre></details><pre>Embedding feature matrix: (3, 384)
+Kubernetes autoscaling cloud: norm=1.000, cloud_similarity=0.714, first4=[-0.06050053611397743, -0.0634092167019844, 0.016553031280636787, -0.042255181819200516]
+OAuth TLS security: norm=1.000, cloud_similarity=0.592, first4=[0.016698747873306274, -0.07229010760784149, -0.07282361388206482, -0.06674164533615112]
+PostgreSQL database: norm=1.000, cloud_similarity=0.560, first4=[-0.03541020303964615, -0.03556958958506584, -0.015327597968280315, -0.053208280354738235]
+</pre></section><section id="cell-9"><h2>3. Feature trung thực trông như thế nào? · Out[5]</h2><details><summary>Code nguồn</summary><pre>rng = np.random.default_rng(0)
+mask = rng.random(len(feat)) &lt; 0.7
+print(f&quot;{&#x27;feature&#x27;:&lt;26}{&#x27;train&#x27;:&gt;8}{&#x27;holdout&#x27;:&gt;9}{&#x27;gap&#x27;:&gt;8}&quot;)
+for c in [&quot;searches_24h&quot;, &quot;searches_7d&quot;, &quot;seconds_since_last&quot;]:
+    tr = auc(feat.loc[mask, c], feat.loc[mask, &quot;clicked&quot;])
+    ho = auc(feat.loc[~mask, c], feat.loc[~mask, &quot;clicked&quot;])
+    print(f&quot;{c:&lt;26}{tr:8.3f}{ho:9.3f}{tr-ho:+8.3f}&quot;)</pre></details><pre>feature                      train  holdout     gap
+searches_24h                 0.592    0.580  +0.012
+searches_7d                  0.646    0.666  -0.020
+seconds_since_last           0.435    0.435  +0.000
+</pre></section><section id="cell-11"><h2>4. Rò rỉ #1 — target encoding · Out[6]</h2><details><summary>Code nguồn</summary><pre>print(&quot;── key = session_id (cardinality rất cao, ~1 event/nhóm) ──&quot;)
+print(leakage_experiment(events, &quot;session_id&quot;).round(3).to_string(index=False))
+print(&quot;\n── key = user_id (cardinality thấp hơn, ~45 event/nhóm) ──&quot;)
+print(leakage_experiment(events, &quot;user_id&quot;).round(3).to_string(index=False))</pre></details><pre>── key = session_id (cardinality rất cao, ~1 event/nhóm) ──
+      encoding  train_auc  test_auc    gap
+     frequency      0.521     0.516  0.005
+  target-naive      0.999     0.522  0.477
+target-in-fold      0.511     0.522 -0.011
+
+── key = user_id (cardinality thấp hơn, ~45 event/nhóm) ──
+      encoding  train_auc  test_auc   gap
+     frequency      0.726     0.708 0.018
+  target-naive      0.749     0.698 0.052
+target-in-fold      0.714     0.698 0.016
+</pre></section><section id="cell-14"><h2>5. Rò rỉ #2 — join &quot;giá trị mới nhất&quot; thay vì point-in-time · Out[7]</h2><details><summary>Code nguồn</summary><pre>fe = events[[&quot;user_id&quot;, &quot;event_timestamp&quot;]].copy().sort_values(&quot;event_timestamp&quot;)
+fe[&quot;feature_value&quot;] = fe.groupby(&quot;user_id&quot;).cumcount() + 1     # hoạt động tích luỹ
+
+rng = np.random.default_rng(1)
+ent = (events.loc[rng.random(len(events)) &lt; 0.4,
+                  [&quot;user_id&quot;, &quot;event_timestamp&quot;, &quot;clicked&quot;]]
+       .sort_values(&quot;event_timestamp&quot;).reset_index(drop=True))
+
+lat, pit = latest_join(ent, fe), pit_join(ent, fe)
+auc_lat = auc(lat[&quot;feature_value&quot;], lat[&quot;clicked&quot;])
+auc_pit = auc(pit[&quot;feature_value&quot;], pit[&quot;clicked&quot;])
+
+print(f&quot;training rows                    : {len(ent)}&quot;)
+print(f&quot;dòng bị rò (giá trị ghi SAU nhãn): {leaked_row_fraction(ent, fe):.1%}&quot;)
+print(f&quot;\nAUC với latest-value join        : {auc_lat:.3f}   ← dùng tương lai&quot;)
+print(f&quot;AUC với point-in-time join       : {auc_pit:.3f}   ← phục vụ được thật&quot;)
+print(f&quot;\n&#x27;lift ảo&#x27; sẽ mất khi lên production: {auc_lat - auc_pit:+.3f} AUC&quot;)</pre></details><pre>training rows                    : 3535
+dòng bị rò (giá trị ghi SAU nhãn): 98.2%
+
+AUC với latest-value join        : 0.715   ← dùng tương lai
+AUC với point-in-time join       : 0.595   ← phục vụ được thật
+
+&#x27;lift ảo&#x27; sẽ mất khi lên production: +0.120 AUC
+</pre></section><section id="cell-17"><h2>6. On-demand feature: công thức không thể materialize · Out[8]</h2><details><summary>Code nguồn</summary><pre>repo = ROOT / &quot;app&quot; / &quot;feast_repo_ondemand&quot;
+subprocess.run([sys.executable, str(ROOT / &quot;scripts&quot; / &quot;gen_spend.py&quot;)], check=True,
+               capture_output=True)
+subprocess.run([sys.executable, &quot;-m&quot;, &quot;feast.cli.cli&quot;, &quot;apply&quot;], cwd=repo, check=True, capture_output=True)
+subprocess.run([sys.executable, &quot;-m&quot;, &quot;feast.cli.cli&quot;, &quot;materialize-incremental&quot;,
+                datetime.now(timezone.utc).strftime(&quot;%Y-%m-%dT%H:%M:%S&quot;)],
+               cwd=repo, check=True, capture_output=True)
+print(&quot;feast apply + materialize OK&quot;)</pre></details><pre>feast apply + materialize OK
+</pre></section><section id="cell-18"><h2>6. On-demand feature: công thức không thể materialize · Out[9]</h2><details><summary>Code nguồn</summary><pre>from feast import FeatureStore  # noqa: E402
+
+fs = FeatureStore(repo_path=str(repo))
+out = fs.get_online_features(
+    features=[&quot;user_spend_stats:avg_amount_7d&quot;,
+              &quot;amount_vs_avg:amount_vs_avg&quot;, &quot;amount_vs_avg:is_spike&quot;],
+    entity_rows=[
+        {&quot;user_id&quot;: &quot;u_000&quot;, &quot;amount&quot;: 100_000.0},      # giao dịch nhỏ
+        {&quot;user_id&quot;: &quot;u_000&quot;, &quot;amount&quot;: 15_000_000.0},   # CÙNG user, bất thường
+        {&quot;user_id&quot;: &quot;u_001&quot;, &quot;amount&quot;: 250_000.0},
+    ],
+).to_dict()
+
+for i in range(3):
+    print(f&quot;user={out[&#x27;user_id&#x27;][i]}  avg7d={out[&#x27;avg_amount_7d&#x27;][i]:&gt;12,.0f}  &quot;
+          f&quot;ratio={out[&#x27;amount_vs_avg&#x27;][i]:6.2f}  spike={out[&#x27;is_spike&#x27;][i]}&quot;)
+assert out[&quot;avg_amount_7d&quot;][0] == out[&quot;avg_amount_7d&quot;][1]
+assert out[&quot;amount_vs_avg&quot;][0] != out[&quot;amount_vs_avg&quot;][1]
+assert out[&quot;is_spike&quot;][:2] == [0, 1]
+assert leakage_experiment(events, &quot;session_id&quot;).set_index(&quot;encoding&quot;).loc[&quot;target-naive&quot;, &quot;gap&quot;] &gt; 0.30
+assert abs(leakage_experiment(events, &quot;session_id&quot;).set_index(&quot;encoding&quot;).loc[&quot;target-in-fold&quot;, &quot;gap&quot;]) &lt; 0.10
+print(&quot;PASS — leakage gap &gt; 0.30; request-time amounts produce different ratios for the same user&quot;)</pre></details><pre>user=u_000  avg7d=   3,566,076  ratio=  0.03  spike=0
+user=u_000  avg7d=   3,566,076  ratio=  4.21  spike=1
+user=u_001  avg7d=   3,718,992  ratio=  0.07  spike=0
+PASS — leakage gap &gt; 0.30; request-time amounts produce different ratios for the same user
+</pre></section></html>

@@ -1,0 +1,8 @@
+{
+  "command": "bash setup-lite.sh && make benchmark",
+  "status": "interrupted",
+  "exit_code": 1,
+  "reason": "Installer cache option was overridden by setup; stopped only this task-created session to correct cache selection and retain partial logs. This run is not pass evidence.",
+  "original_environment_modified": false,
+  "partial_logs_retained": true
+}

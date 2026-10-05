@@ -16,6 +16,7 @@ fixing it. Never ship that.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from uuid import uuid4
 
 import numpy as np
 from qdrant_client import QdrantClient, models
@@ -58,12 +59,12 @@ class SemanticCache:
     stats: CacheStats = field(default_factory=CacheStats)
     _clock: float = 0.0          # virtual clock: lets TTL be tested without sleeping
     _next_id: int = 0
+    collection_name: str = field(default_factory=lambda: f"{CACHE_COLLECTION}_{uuid4().hex}")
+    _stale_seen: set[int] = field(default_factory=set)
 
     def __post_init__(self) -> None:
-        if CACHE_COLLECTION in {c.name for c in self.client.get_collections().collections}:
-            self.client.delete_collection(CACHE_COLLECTION)
         self.client.create_collection(
-            collection_name=CACHE_COLLECTION,
+            collection_name=self.collection_name,
             vectors_config=models.VectorParams(size=self.dim, distance=models.Distance.COSINE),
         )
 
@@ -83,7 +84,7 @@ class SemanticCache:
                 key="tenant", match=models.MatchValue(value=tenant))])
 
         pts = self.client.query_points(
-            collection_name=CACHE_COLLECTION,
+            collection_name=self.collection_name,
             query=self._embed(question),
             query_filter=qf,
             limit=1,
@@ -99,13 +100,24 @@ class SemanticCache:
 
         age = self._clock - p.payload["ts"]
         if self.ttl_s is not None and age > self.ttl_s:
-            self.stats.stale_evictions += 1
-            self.stats.misses += 1
-            self.client.delete(
-                collection_name=CACHE_COLLECTION,
-                points_selector=models.PointIdsList(points=[p.id]),
-            )
-            return None
+            if p.id not in self._stale_seen:
+                self.stats.stale_evictions += 1
+                self._stale_seen.add(p.id)
+            # Logical expiry preserves records. An expired nearest neighbour
+            # must not hide a less-similar but still-valid answer.
+            must = list(qf.must or []) if qf is not None else []
+            must.append(models.FieldCondition(key="ts", range=models.Range(
+                gte=self._clock - self.ttl_s)))
+            fresh = self.client.query_points(
+                collection_name=self.collection_name,
+                query=self._embed(question), query_filter=models.Filter(must=must),
+                limit=1,
+            ).points
+            if not fresh or fresh[0].score < self.threshold:
+                self.stats.misses += 1
+                return None
+            p = fresh[0]
+            age = self._clock - p.payload["ts"]
 
         self.stats.hits += 1
         return CacheHit(
@@ -124,14 +136,14 @@ class SemanticCache:
             qf = models.Filter(must=[models.FieldCondition(
                 key="tenant", match=models.MatchValue(value=tenant))])
         pts = self.client.query_points(
-            collection_name=CACHE_COLLECTION,
+            collection_name=self.collection_name,
             query=self._embed(question), query_filter=qf, limit=1,
         ).points
         return (float(pts[0].score), pts[0].payload) if pts else None
 
     def put(self, tenant: str, question: str, answer: str) -> None:
         self.client.upsert(
-            collection_name=CACHE_COLLECTION,
+            collection_name=self.collection_name,
             points=[models.PointStruct(
                 id=self._next_id,
                 vector=self._embed(question),

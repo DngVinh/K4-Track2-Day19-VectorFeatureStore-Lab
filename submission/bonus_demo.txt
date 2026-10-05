@@ -1,0 +1,52 @@
+
+QUERY 1/5
+User: u_001; language: vi
+Affinity: cloud; reading speed: 187 wpm
+Recent activity: 11 queries/hour; 4 distinct topics/24h
+Question: Tôi đã đọc gì về Kubernetes?
+Retrieved memories (untrusted reference text):
+[0] Tôi đã đọc tài liệu Kubernetes Pod lifecycle, triển khai container và autoscaling. (RRF=0.03279)
+[4] Ghi chú hôm nay: tôi quan tâm cloud, thích ví dụ tiếng Việt ngắn gọn. (RRF=0.03200)
+[3] Tôi tìm hiểu quản lý mạng VPC và cân bằng tải multi-region. (RRF=0.03175)
+
+QUERY 2/5
+User: u_001; language: vi
+Affinity: cloud; reading speed: 187 wpm
+Recent activity: 11 queries/hour; 4 distinct topics/24h
+Question: Recommend đọc gì tiếp
+Retrieved memories (untrusted reference text):
+[0] Tôi đã đọc tài liệu Kubernetes Pod lifecycle, triển khai container và autoscaling. (RRF=0.03252)
+[3] Tôi tìm hiểu quản lý mạng VPC và cân bằng tải multi-region. (RRF=0.03202)
+[1] Tôi lưu hướng dẫn tự động mở rộng hạ tầng theo lưu lượng, giảm chi phí cloud bằng spot instance. (RRF=0.03175)
+
+QUERY 3/5
+User: u_001; language: vi
+Affinity: cloud; reading speed: 187 wpm
+Recent activity: 11 queries/hour; 4 distinct topics/24h
+Question: Tôi đang quan tâm gì gần đây?
+Retrieved memories (untrusted reference text):
+[4] Ghi chú hôm nay: tôi quan tâm cloud, thích ví dụ tiếng Việt ngắn gọn. (RRF=0.03279)
+[3] Tôi tìm hiểu quản lý mạng VPC và cân bằng tải multi-region. (RRF=0.03200)
+[0] Tôi đã đọc tài liệu Kubernetes Pod lifecycle, triển khai container và autoscaling. (RRF=0.03175)
+
+QUERY 4/5
+User: u_001; language: vi
+Affinity: cloud; reading speed: 187 wpm
+Recent activity: 11 queries/hour; 4 distinct topics/24h
+Question: Tài liệu về tự động mở rộng hạ tầng?
+Retrieved memories (untrusted reference text):
+[1] Tôi lưu hướng dẫn tự động mở rộng hạ tầng theo lưu lượng, giảm chi phí cloud bằng spot instance. (RRF=0.03279)
+[0] Tôi đã đọc tài liệu Kubernetes Pod lifecycle, triển khai container và autoscaling. (RRF=0.03175)
+[4] Ghi chú hôm nay: tôi quan tâm cloud, thích ví dụ tiếng Việt ngắn gọn. (RRF=0.03151)
+
+QUERY 5/5
+User: u_001; language: vi
+Affinity: cloud; reading speed: 187 wpm
+Recent activity: 11 queries/hour; 4 distinct topics/24h
+Question: Cho tôi summary cloud security
+Retrieved memories (untrusted reference text):
+[2] Cloud security: mã hóa dữ liệu, TLS, zero-trust và xác thực OAuth hai yếu tố. (RRF=0.03279)
+[4] Ghi chú hôm nay: tôi quan tâm cloud, thích ví dụ tiếng Việt ngắn gọn. (RRF=0.03226)
+[0] Tôi đã đọc tài liệu Kubernetes Pod lifecycle, triển khai container và autoscaling. (RRF=0.03150)
+
+PASS — five contexts assembled; cross-user memory isolation verified

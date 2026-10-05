@@ -150,7 +150,8 @@ def target_encode_in_fold(df: pd.DataFrame, col: str, target: str,
     for f in range(n_folds):
         tr, te = fold != f, fold == f
         means = df.loc[tr].groupby(col)[target].mean()
-        out.loc[te] = df.loc[te, col].map(means).fillna(prior).values
+        fold_prior = df.loc[tr, target].mean()
+        out.loc[te] = df.loc[te, col].map(means).fillna(fold_prior).values
     return out.fillna(prior)
 
 

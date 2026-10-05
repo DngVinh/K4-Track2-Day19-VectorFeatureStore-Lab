@@ -76,7 +76,7 @@ class FilteredIndex:
         vectors = np.asarray([p.vector for p in points], dtype=np.float32)
 
         if FILTERED_COLLECTION in {c.name for c in client.get_collections().collections}:
-            client.delete_collection(FILTERED_COLLECTION)
+            raise RuntimeError("Filtered collection already exists; existing data is preserved.")
         client.create_collection(
             collection_name=FILTERED_COLLECTION,
             vectors_config=models.VectorParams(

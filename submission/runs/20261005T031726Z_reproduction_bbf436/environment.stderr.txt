@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "C:\Python314\Lib\importlib\metadata\__init__.py", line 407, in from_name
+    return next(iter(cls.discover(name=name)))
+StopIteration
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import sys,platform,importlib.metadata as m,json; print(json.dumps({'python':sys.version,'platform':platform.platform(),'packages':{p:m.version(p) for p in ('fastembed','qdrant-client','feast','dill','pyarrow','numpy','pytest','jupytext','uv')}},indent=2))
+                                                                                                                                          ~~~~~~~~~^^^
+  File "C:\Python314\Lib\importlib\metadata\__init__.py", line 987, in version
+    return distribution(distribution_name).version
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\importlib\metadata\__init__.py", line 960, in distribution
+    return Distribution.from_name(distribution_name)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\importlib\metadata\__init__.py", line 409, in from_name
+    raise PackageNotFoundError(name)
+importlib.metadata.PackageNotFoundError: No package metadata was found for fastembed

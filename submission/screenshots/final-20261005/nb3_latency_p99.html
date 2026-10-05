@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><title>Lab 19 screenshot evidence</title><style>body{font:16px Arial;margin:24px}pre{white-space:pre-wrap;font:16px/1.5 Consolas}section{border:1px solid #ccc;padding:18px;margin:18px 0}</style><h1>03_search_api_benchmark</h1><p>Final executed output excerpts. Rendered evidence accepted by the user as submission screenshots.</p><section><h2>Output [2]</h2><pre>{&#x27;ready&#x27;: True, &#x27;n_docs&#x27;: 1000}</pre></section><section><h2>Output [3]</h2><pre>API response sample: first 3 of 10 hits (complete response in notebook)
+{
+  &quot;query&quot;: &quot;cloud computing tự động mở rộng&quot;,
+  &quot;mode&quot;: &quot;hybrid&quot;,
+  &quot;top_k&quot;: 10,
+  &quot;latency_ms&quot;: 15.18249999935506,
+  &quot;hits&quot;: [
+    {
+      &quot;doc_id&quot;: &quot;cloud_016&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, serverless, AWS. Khái niệm hạ tầng và không máy chủ là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và AWS.&quot;,
+      &quot;score&quot;: 0.03252247488101534
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_072&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Theo khuyến nghị 2026, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm cloud, Azure, Kubernetes. Khái niệm triển khai và đám mây là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với cloud và Kubernetes.&quot;,
+      &quot;score&quot;: 0.032266458495966696
+    },
+    {
+      &quot;doc_id&quot;: &quot;cloud_053&quot;,
+      &quot;title&quot;: &quot;Điện toán đám mây: tự động mở rộng theo lưu lượng&quot;,
+      &quot;text&quot;: &quot;Để tối ưu chi phí, điện toán đám mây đòi hỏi phải tự động mở rộng theo lưu lượng. Các công cụ phổ biến gồm AWS, auto-scaling, cloud. Khái niệm tự động mở rộng và triển khai là nền tảng quan trọng. Bài viết này giải thích cách tự động mở rộng theo lưu lượng một cách thực tế, kèm ví dụ minh hoạ với AWS và cloud.&quot;,
+      &quot;score&quot;: 0.0315136476426799
+    }
+  ]
+}</pre></section><section><h2>Output [4]</h2><pre>Warmup completed: 10 requests per mode (excluded from measurements)
+  mode            P50      P95      P99  P99(wall)
+
+  keyword       1.4ms    2.5ms    2.9ms      5.2ms
+
+  semantic     13.5ms   17.9ms   19.3ms     21.2ms
+
+  hybrid       15.9ms   21.4ms   27.1ms     29.0ms</pre></section><section><h2>Output [5]</h2><pre>Hybrid P99 server-side: 27.1ms
+PASS — hybrid P99 &lt; 50ms (27.1ms)</pre></section><section><h2>Output [6]</h2><pre>API server stopped</pre></section>

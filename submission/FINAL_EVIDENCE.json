@@ -1,0 +1,79 @@
+{
+  "notebooks": [
+    {
+      "source": "notebooks/01_embeddings_index.py",
+      "notebook": "notebooks/01_embeddings_index.ipynb",
+      "source_sha256": "e34fc73b6475507e2a65d13a5033e12d3299614fd14c62e854443270b7b5bcd1",
+      "notebook_sha256": "667747ebafbc6b3727292d4d6977a50432f7f43050b1ed140c2cb51c2ca6323b",
+      "capture_html": "submission/screenshots/manual-20261005/01_embeddings_index.html"
+    },
+    {
+      "source": "notebooks/02_hybrid_search_rrf.py",
+      "notebook": "submission/runs/20261005T032016Z_527f26/02_hybrid_search_rrf.ipynb",
+      "source_sha256": "bb83f7a050b474bd6b11c63269dc2ad2c81543fb9bac80d1b4aacad6adf8de7b",
+      "notebook_sha256": "1f7f67d5f9674eb36e4dd9a77f6d1af165e8ce7b68523c5876d141d530c5aaf1",
+      "capture_html": "submission/screenshots/manual-20261005/02_hybrid_search_rrf.html"
+    },
+    {
+      "source": "notebooks/03_search_api_benchmark.py",
+      "notebook": "submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/03_search_api_benchmark.ipynb",
+      "source_sha256": "c329824fdc6121253c2985142de214d44de6ef1a30876fee54ee2ad6cba88fd0",
+      "notebook_sha256": "109a17a11830880dad005b88978252bbfaef952fadfc3f2d46db56a4da300ade",
+      "capture_html": "submission/screenshots/manual-20261005/03_search_api_benchmark.html"
+    },
+    {
+      "source": "notebooks/04_feast_feature_store.py",
+      "notebook": "submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/04_feast_feature_store.ipynb",
+      "source_sha256": "fc85ff20d9c89eea6a41a154331a5c23ccb882688ee07c1ead884537209a6f53",
+      "notebook_sha256": "dcde3e304966e1ab707911f95caa17c0524891def3929d0dac1285fea94b295a",
+      "capture_html": "submission/screenshots/manual-20261005/04_feast_feature_store.html"
+    },
+    {
+      "source": "notebooks/05_filtered_search.py",
+      "notebook": "submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/05_filtered_search.ipynb",
+      "source_sha256": "124e89e0a704b60edc68cc30c07db766ea31b5c18ad4afc05865da98aea522e6",
+      "notebook_sha256": "24e817bd9709e79982e87427d5cd827d0b48808d135b692991cc512c95cdaf5e",
+      "capture_html": "submission/screenshots/manual-20261005/05_filtered_search.html"
+    },
+    {
+      "source": "notebooks/06_agent_retrieval.py",
+      "notebook": "submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/06_agent_retrieval.ipynb",
+      "source_sha256": "08f2403f994e09238d1617984fda27b7db448712d99e62ad5a8665959a40ca2c",
+      "notebook_sha256": "6782abead8376e67026c0ad0d2e028d6712a2a7694eb0d082545c231c0a38b31",
+      "capture_html": "submission/screenshots/manual-20261005/06_agent_retrieval.html"
+    },
+    {
+      "source": "notebooks/07_semantic_cache.py",
+      "notebook": "notebooks/07_semantic_cache.ipynb",
+      "source_sha256": "30eba707ecb0e21e88f563d223d62f452f16c2ca286d935b58bff8a5cc621ae6",
+      "notebook_sha256": "2d6874efe32e4009ef94dd066bdc70deeaca0c7da0e3b5fc9c10ee543e50e0ff",
+      "capture_html": "submission/screenshots/manual-20261005/07_semantic_cache.html"
+    },
+    {
+      "source": "notebooks/08_feature_engineering.py",
+      "notebook": "submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/08_feature_engineering.ipynb",
+      "source_sha256": "8509316258732eaf1cb69402a27798b5604175a42869677625e90ca0f28107ac",
+      "notebook_sha256": "2786ef4b49f2beaa6cd91b0bddebd9dc947882aab928f8e466fb5ee93f393d1c",
+      "capture_html": "submission/screenshots/manual-20261005/08_feature_engineering.html"
+    }
+  ],
+  "dependency_sha256": {
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/agent.py": "666e7aab2a00faeaf5b504c3aad7052e48ea640a3d91f1e823ffb5e658ce561a",
+    "app/cache.py": "b0864948cfd82830124da56ae757102aa17840432f8d4311cec7a8f9f4569061",
+    "app/embeddings.py": "fbc205472337e2202bc5a0da64a6876612aaabcb621ff117de6e84c5459a1a38",
+    "app/features.py": "16a8653d9abc0fcbf48a44192db42fbf97b17a697a4e7a5599fcc5c28bfde065",
+    "app/filters.py": "f0169ed5e3f8a48dec97187a9d0e7a5439a0912b86c23c402c655f01a3db427f",
+    "app/main.py": "8d1b602a237666780d83329fbf0421c8d6b68179778a39ca03e3213de829fe56",
+    "app/metadata.py": "0a046d9e109a744b45c6343b064d3e1149b2480ef5218eac0686be475f13c227",
+    "app/search.py": "be3fb6026485515d69d41774c82e8f45bc90ccf2260580ef51eff00c41168515",
+    "bonus/agent.py": "39e5cd046875881c697a73d4cc3ac680840df032147bb36ecca107ddb5636597",
+    "bonus/demo.py": "e84b1ee77bda34993c398b7ed1ec1bb86ef065b9ca80c126ce3666f86986d10e",
+    "notebooks/_setup.py": "346c33b4d849aa146c348bfe3a6e65508f7d3bce4de1c2204dd89e6d30a3b6a9",
+    "scripts/audit_search.py": "c2a10c7fec610f605df8f08a2f8eeba01c6513f779f6cf3617a02590b4846812"
+  },
+  "browser_screenshots": [],
+  "screenshot_status": "COMPLETE: user accepts rendered executed outputs as submission screenshots; 8/8 matched to final outputs",
+  "submission_screenshots_manifest": "submission/screenshots/CURRENT_SCREENSHOTS.json",
+  "old_notebooks_and_rendered_pngs_preserved": true
+}

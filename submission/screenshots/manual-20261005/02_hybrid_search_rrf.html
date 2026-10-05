@@ -1,0 +1,248 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 02_hybrid_search_rrf</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: submission/runs/20261005T032016Z_527f26/02_hybrid_search_rrf.ipynb<br>SHA-256: 1f7f67d5f9674eb36e4dd9a77f6d1af165e8ce7b68523c5876d141d530c5aaf1</p><nav><ul><li><a href="#cell-1">NB2 — Hybrid Search: BM25 + Vector + RRF · Out[1]</a></li><li><a href="#cell-3">1. Reload corpus + build both indices · Out[2]</a></li><li><a href="#cell-7">3. TODO — implement Reciprocal Rank Fusion · Out[4]</a></li><li><a href="#cell-9">4. Đánh giá trên golden set (50 queries) · Out[5]</a></li><li><a href="#cell-11">5. Slice theo loại query · Out[6]</a></li><li><a href="#cell-13">6. Kiểm chứng tiêu chí paraphrase bằng model đa ngữ · Out[7]</a></li><li><a href="#cell-15">Đối chiếu thêm: vector kết hợp hai model với trọng số cố định 50/50 · Out[8]</a></li><li><a href="#cell-18">7. Audit preprocessing với các cấu hình cố định · Out[9]</a></li></ul></nav><section id="cell-1"><h2>NB2 — Hybrid Search: BM25 + Vector + RRF · Out[1]</h2><details><summary>Code nguồn</summary><pre>import _setup  # noqa: F401
+import json
+import statistics
+from pathlib import Path
+
+from fastembed import TextEmbedding
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+from rank_bm25 import BM25Okapi
+
+DATA = Path(_setup.__file__).resolve().parent.parent / &quot;data&quot;</pre></details><pre>C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\.venv\Lib\site-packages\tqdm\auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+</pre></section><section id="cell-3"><h2>1. Reload corpus + build both indices · Out[2]</h2><details><summary>Code nguồn</summary><pre>docs = [json.loads(line) for line in (DATA / &quot;corpus_vn.jsonl&quot;).open(encoding=&quot;utf-8&quot;)]
+
+# BM25
+tokenized = [(d[&quot;title&quot;] + &quot; &quot; + d[&quot;text&quot;]).lower().split() for d in docs]
+bm25 = BM25Okapi(tokenized)
+
+# Vector
+embedder = TextEmbedding(model_name=&quot;BAAI/bge-small-en-v1.5&quot;)
+client = QdrantClient(&quot;:memory:&quot;)
+client.create_collection(
+    collection_name=&quot;lab19&quot;,
+    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+)
+BATCH = 64
+points = []
+for start in range(0, len(docs), BATCH):
+    batch = docs[start:start + BATCH]
+    texts = [d[&quot;title&quot;] + &quot; &quot; + d[&quot;text&quot;] for d in batch]
+    vectors = list(embedder.embed(texts))
+    for i, (d, v) in enumerate(zip(batch, vectors)):
+        points.append(PointStruct(
+            id=start + i, vector=v.tolist(),
+            payload={&quot;doc_id&quot;: d[&quot;doc_id&quot;], &quot;topic&quot;: d[&quot;topic&quot;]},
+        ))
+client.upsert(collection_name=&quot;lab19&quot;, points=points)
+print(f&quot;BM25 + vector indices ready ({len(docs)} docs)&quot;)</pre></details><pre>BM25 + vector indices ready (1000 docs)
+</pre></section><section id="cell-7"><h2>3. TODO — implement Reciprocal Rank Fusion · Out[4]</h2><details><summary>Code nguồn</summary><pre>def search_hybrid(query: str, top_k: int = TOP_K, rrf_k: int = RRF_K) -&gt; list[str]:
+    depth = max(top_k * 5, 50)
+    kw_ids = search_keyword(query, depth)
+    sem_ids = search_semantic(query, depth)
+
+    # TODO: implement RRF fusion below.
+    # Hint: dict[doc_id, float] cộng 1/(rrf_k + rank) từ mỗi retriever.
+    # rank starts at 1, not 0.
+    rrf: dict[str, float] = {}
+    for rank, doc_id in enumerate(kw_ids, start=1):
+        rrf[doc_id] = rrf.get(doc_id, 0.0) + 1.0 / (rrf_k + rank)
+    for rank, doc_id in enumerate(sem_ids, start=1):
+        rrf[doc_id] = rrf.get(doc_id, 0.0) + 1.0 / (rrf_k + rank)
+
+    return [doc_id for doc_id, _ in sorted(rrf.items(), key=lambda kv: -kv[1])[:top_k]]
+
+
+# Quick sanity (1 paraphrase query from data/golden_set.jsonl):
+test_q = &quot;co giãn linh hoạt theo nhu cầu sử dụng&quot;
+print(f&quot;Query: {test_q}&quot;)
+print(f&quot;  keyword top-3:  {search_keyword(test_q)[:3]}&quot;)
+print(f&quot;  semantic top-3: {search_semantic(test_q)[:3]}&quot;)
+print(f&quot;  hybrid top-3:   {search_hybrid(test_q)[:3]}&quot;)</pre></details><pre>Query: co giãn linh hoạt theo nhu cầu sử dụng
+  keyword top-3:  [&#x27;mobile_082&#x27;, &#x27;mobile_093&#x27;, &#x27;mobile_092&#x27;]
+  semantic top-3: [&#x27;ai_ml_048&#x27;, &#x27;cloud_053&#x27;, &#x27;ai_ml_025&#x27;]
+  hybrid top-3:   [&#x27;cloud_016&#x27;, &#x27;mobile_082&#x27;, &#x27;ai_ml_048&#x27;]
+</pre></section><section id="cell-9"><h2>4. Đánh giá trên golden set (50 queries) · Out[5]</h2><details><summary>Code nguồn</summary><pre>golden = [json.loads(line) for line in (DATA / &quot;golden_set.jsonl&quot;).open(encoding=&quot;utf-8&quot;)]
+doc_topic = {d[&quot;doc_id&quot;]: d[&quot;topic&quot;] for d in docs}
+
+
+def precision_at_10(retrieved_ids: list[str], target_topic: str) -&gt; float:
+    if not retrieved_ids:
+        return 0.0
+    return sum(1 for d in retrieved_ids[:10] if doc_topic.get(d) == target_topic) / 10
+
+
+p_kw, p_sem, p_hyb = [], [], []
+for q in golden:
+    p_kw.append(precision_at_10(search_keyword(q[&quot;query&quot;]), q[&quot;topic&quot;]))
+    p_sem.append(precision_at_10(search_semantic(q[&quot;query&quot;]), q[&quot;topic&quot;]))
+    p_hyb.append(precision_at_10(search_hybrid(q[&quot;query&quot;]), q[&quot;topic&quot;]))
+
+print(f&quot;Precision@10 (avg over {len(golden)} queries):&quot;)
+print(f&quot;  Keyword (BM25)   : {statistics.mean(p_kw):.1%}&quot;)
+print(f&quot;  Semantic (vector): {statistics.mean(p_sem):.1%}&quot;)
+print(f&quot;  Hybrid  (RRF=60) : {statistics.mean(p_hyb):.1%}   &lt;- should win&quot;)</pre></details><pre>Precision@10 (avg over 50 queries):
+  Keyword (BM25)   : 77.8%
+  Semantic (vector): 73.2%
+  Hybrid  (RRF=60) : 78.6%   &lt;- should win
+</pre></section><section id="cell-11"><h2>5. Slice theo loại query · Out[6]</h2><details><summary>Code nguồn</summary><pre>from collections import defaultdict
+
+by_type: dict[str, dict[str, list[float]]] = defaultdict(lambda: {&quot;kw&quot;: [], &quot;sem&quot;: [], &quot;hyb&quot;: []})
+for q, kw, sem, hyb in zip(golden, p_kw, p_sem, p_hyb):
+    by_type[q[&quot;mode_hint&quot;]][&quot;kw&quot;].append(kw)
+    by_type[q[&quot;mode_hint&quot;]][&quot;sem&quot;].append(sem)
+    by_type[q[&quot;mode_hint&quot;]][&quot;hyb&quot;].append(hyb)
+
+print(f&quot;  {&#x27;type&#x27;:12} {&#x27;n&#x27;:&gt;3}  {&#x27;kw&#x27;:&gt;7} {&#x27;sem&#x27;:&gt;7} {&#x27;hyb&#x27;:&gt;7}&quot;)
+for t in (&quot;exact&quot;, &quot;paraphrase&quot;, &quot;mixed&quot;):
+    m = by_type[t]
+    print(f&quot;  {t:12} {len(m[&#x27;kw&#x27;]):&gt;3}  &quot;
+          f&quot;{statistics.mean(m[&#x27;kw&#x27;]):&gt;6.1%} &quot;
+          f&quot;{statistics.mean(m[&#x27;sem&#x27;]):&gt;6.1%} &quot;
+          f&quot;{statistics.mean(m[&#x27;hyb&#x27;]):&gt;6.1%}&quot;)
+assert len(golden) == 50
+assert statistics.mean(p_hyb) &gt; statistics.mean(p_kw)
+assert statistics.mean(p_hyb) &gt; statistics.mean(p_sem)
+assert statistics.mean(by_type[&quot;mixed&quot;][&quot;hyb&quot;]) &gt;= max(
+    statistics.mean(by_type[&quot;mixed&quot;][&quot;kw&quot;]), statistics.mean(by_type[&quot;mixed&quot;][&quot;sem&quot;]))
+print(&quot;PASS — hybrid beats both baselines overall; mixed-slice comparison verified&quot;)</pre></details><pre>  type           n       kw     sem     hyb
+  exact         15   96.7%  88.7%  96.7%
+  paraphrase    15   33.3%  24.0%  32.0%
+  mixed         20   97.0%  98.5% 100.0%
+PASS — hybrid beats both baselines overall; mixed-slice comparison verified
+</pre></section><section id="cell-13"><h2>6. Kiểm chứng tiêu chí paraphrase bằng model đa ngữ · Out[7]</h2><details><summary>Code nguồn</summary><pre>MULTILINGUAL_MODEL = &quot;sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2&quot;
+multi_embedder = TextEmbedding(model_name=MULTILINGUAL_MODEL)
+multi_client = QdrantClient(&quot;:memory:&quot;)
+multi_client.create_collection(collection_name=&quot;lab19_multilingual&quot;,
+    vectors_config=VectorParams(size=384, distance=Distance.COSINE))
+for start in range(0, len(docs), BATCH):
+    batch = docs[start:start + BATCH]
+    vectors = list(multi_embedder.embed([d[&quot;title&quot;] + &quot; &quot; + d[&quot;text&quot;] for d in batch]))
+    multi_client.upsert(collection_name=&quot;lab19_multilingual&quot;, points=[
+        PointStruct(id=start + i, vector=vector.tolist(), payload={&quot;doc_id&quot;: doc[&quot;doc_id&quot;]})
+        for i, (doc, vector) in enumerate(zip(batch, vectors))])
+assert multi_client.count(&quot;lab19_multilingual&quot;).count == 1000
+multi_sem, multi_hyb = [], []
+for q in golden:
+    vector = next(multi_embedder.embed([q[&quot;query&quot;]])).tolist()
+    dense = [point.payload[&quot;doc_id&quot;] for point in multi_client.query_points(
+        collection_name=&quot;lab19_multilingual&quot;, query=vector, limit=50).points]
+    sparse = search_keyword(q[&quot;query&quot;], 50)
+    scores = {}
+    for ranked in (sparse, dense):
+        for rank, doc_id in enumerate(ranked, start=1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1 / (60 + rank)
+    fused = [doc_id for doc_id, _ in sorted(scores.items(), key=lambda pair: -pair[1])[:10]]
+    multi_sem.append(precision_at_10(dense[:10], q[&quot;topic&quot;]))
+    multi_hyb.append(precision_at_10(fused, q[&quot;topic&quot;]))
+print(f&quot;Multilingual experiment: {MULTILINGUAL_MODEL}&quot;)
+print(&quot;Same 1000 documents / 50 queries / BM25 / RRF k=60 / top-50 / Precision@10&quot;)
+print(f&quot;Overall: keyword={statistics.mean(p_kw):.1%}, semantic={statistics.mean(multi_sem):.1%}, &quot;
+      f&quot;hybrid={statistics.mean(multi_hyb):.1%}&quot;)
+print(f&quot;  {&#x27;type&#x27;:12} {&#x27;n&#x27;:&gt;3} {&#x27;kw&#x27;:&gt;7} {&#x27;sem&#x27;:&gt;7} {&#x27;hyb&#x27;:&gt;7}&quot;)
+multi_slices = {}
+for kind in (&quot;exact&quot;, &quot;paraphrase&quot;, &quot;mixed&quot;):
+    subset = [i for i, q in enumerate(golden) if q[&quot;mode_hint&quot;] == kind]
+    values = [statistics.mean([mode[i] for i in subset]) for mode in (p_kw, multi_sem, multi_hyb)]
+    multi_slices[kind] = values
+    print(f&quot;  {kind:12} {len(subset):&gt;3} {values[0]:&gt;6.1%} {values[1]:&gt;6.1%} {values[2]:&gt;6.1%}&quot;)
+assert multi_slices[&quot;paraphrase&quot;][1] &gt; multi_slices[&quot;paraphrase&quot;][0]
+assert statistics.mean(multi_hyb) &gt; statistics.mean(p_kw)
+assert statistics.mean(multi_hyb) &gt; statistics.mean(multi_sem)
+print(&quot;PASS — multilingual vector wins paraphrase; hybrid beats both baselines overall at unchanged RRF settings&quot;)
+print(f&quot;Tradeoff on mixed: multilingual hybrid={multi_slices[&#x27;mixed&#x27;][2]:.1%}, &quot;
+      f&quot;BM25={multi_slices[&#x27;mixed&#x27;][0]:.1%}; BGE-small hybrid above achieved 100.0%.&quot;)
+print(&quot;Model choice changes the slice winners. Keep both measured tables; do not assume a universal winner.&quot;)</pre></details><pre>Multilingual experiment: sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
+Same 1000 documents / 50 queries / BM25 / RRF k=60 / top-50 / Precision@10
+Overall: keyword=77.8%, semantic=75.8%, hybrid=80.6%
+  type           n      kw     sem     hyb
+  exact         15  96.7%  90.0%  98.0%
+  paraphrase    15  33.3%  48.0%  44.0%
+  mixed         20  97.0%  86.0%  95.0%
+PASS — multilingual vector wins paraphrase; hybrid beats both baselines overall at unchanged RRF settings
+Tradeoff on mixed: multilingual hybrid=95.0%, BM25=97.0%; BGE-small hybrid above achieved 100.0%.
+Model choice changes the slice winners. Keep both measured tables; do not assume a universal winner.
+</pre></section><section id="cell-15"><h2>Đối chiếu thêm: vector kết hợp hai model với trọng số cố định 50/50 · Out[8]</h2><details><summary>Code nguồn</summary><pre>import numpy as np
+base_points, _ = client.scroll(&quot;lab19&quot;, limit=1000, with_vectors=True)
+multi_points, _ = multi_client.scroll(&quot;lab19_multilingual&quot;, limit=1000, with_vectors=True)
+base_points = sorted(base_points, key=lambda point: point.id)
+multi_points = sorted(multi_points, key=lambda point: point.id)
+assert [p.payload[&quot;doc_id&quot;] for p in base_points] == [p.payload[&quot;doc_id&quot;] for p in multi_points]
+combined_vectors = np.concatenate([
+    np.asarray([p.vector for p in base_points]), np.asarray([p.vector for p in multi_points])], axis=1) / np.sqrt(2)
+ensemble_client = QdrantClient(&quot;:memory:&quot;)
+ensemble_client.create_collection(&quot;lab19_ensemble&quot;,
+    vectors_config=VectorParams(size=768, distance=Distance.COSINE))
+ensemble_client.upsert(&quot;lab19_ensemble&quot;, points=[PointStruct(id=i, vector=vector.tolist(),
+    payload={&quot;doc_id&quot;: docs[i][&quot;doc_id&quot;]}) for i, vector in enumerate(combined_vectors)])
+ensemble_sem, ensemble_hyb = [], []
+for q in golden:
+    bge = next(embedder.embed([q[&quot;query&quot;]]))
+    multilingual = next(multi_embedder.embed([q[&quot;query&quot;]]))
+    query_vector = np.concatenate([bge, multilingual]) / np.sqrt(2)
+    dense = [p.payload[&quot;doc_id&quot;] for p in ensemble_client.query_points(
+        &quot;lab19_ensemble&quot;, query=query_vector.tolist(), limit=50).points]
+    scores = {}
+    for ranked in (search_keyword(q[&quot;query&quot;], 50), dense):
+        for rank, doc_id in enumerate(ranked, start=1):
+            scores[doc_id] = scores.get(doc_id, 0.0) + 1 / (60 + rank)
+    fused = [doc_id for doc_id, _ in sorted(scores.items(), key=lambda pair: -pair[1])[:10]]
+    ensemble_sem.append(precision_at_10(dense[:10], q[&quot;topic&quot;]))
+    ensemble_hyb.append(precision_at_10(fused, q[&quot;topic&quot;]))
+print(&quot;Fixed 50/50 BGE + multilingual vector ensemble (768 dimensions; not the Lite API backend)&quot;)
+print(f&quot;Overall: keyword={statistics.mean(p_kw):.1%}, semantic={statistics.mean(ensemble_sem):.1%}, &quot;
+      f&quot;hybrid={statistics.mean(ensemble_hyb):.1%}&quot;)
+ensemble_slices = {}
+for kind in (&quot;exact&quot;, &quot;paraphrase&quot;, &quot;mixed&quot;):
+    subset = [i for i, q in enumerate(golden) if q[&quot;mode_hint&quot;] == kind]
+    values = [statistics.mean([mode[i] for i in subset]) for mode in (p_kw, ensemble_sem, ensemble_hyb)]
+    ensemble_slices[kind] = values
+    print(f&quot;  {kind:12} {len(subset):&gt;3} {values[0]:&gt;6.1%} {values[1]:&gt;6.1%} {values[2]:&gt;6.1%}&quot;)
+print(&quot;Measured tradeoff: twice the document vector storage and two query embeddings; API latency above uses BGE only.&quot;)</pre></details><pre>Fixed 50/50 BGE + multilingual vector ensemble (768 dimensions; not the Lite API backend)
+Overall: keyword=77.8%, semantic=78.0%, hybrid=81.2%
+  exact         15  96.7%  93.3%  98.0%
+  paraphrase    15  33.3%  49.3%  44.7%
+  mixed         20  97.0%  88.0%  96.0%
+Measured tradeoff: twice the document vector storage and two query embeddings; API latency above uses BGE only.
+</pre></section><section id="cell-18"><h2>7. Audit preprocessing với các cấu hình cố định · Out[9]</h2><details><summary>Code nguồn</summary><pre>from scripts.audit_search import evaluate as audit_preprocessing
+preprocessing_audit = audit_preprocessing()
+baseline_checks = preprocessing_audit[&quot;configs&quot;][&quot;original&quot;][&quot;criteria&quot;]
+print(&quot;BGE required configuration rubric status:&quot;, baseline_checks)
+print(&quot;UNMET — vector does not win paraphrase; the 5-point slice criterion remains incomplete.&quot;)
+print(&quot;Baseline retained; alternative configurations are diagnostics, not a combined submission result.&quot;)</pre></details><pre>original BM25 / Vector / Hybrid
+
+  overall 77.8% / 73.2% / 78.6%
+  exact        96.7% / 88.7% / 96.7%
+  paraphrase   33.3% / 24.0% / 32.0%
+  mixed        97.0% / 98.5% / 100.0%
+  criteria {&#x27;overall_hybrid_strict_win&#x27;: True, &#x27;mixed_hybrid_strict_win&#x27;: True, &#x27;paraphrase_vector_strict_win&#x27;: False, &#x27;exact_bm25_tied_or_best&#x27;: True}
+
+query_instruction BM25 / Vector / Hybrid
+
+  overall 77.8% / 73.6% / 77.2%
+  exact        96.7% / 86.7% / 96.0%
+  paraphrase   33.3% / 25.3% / 31.3%
+  mixed        97.0% / 100.0% / 97.5%
+  criteria {&#x27;overall_hybrid_strict_win&#x27;: False, &#x27;mixed_hybrid_strict_win&#x27;: False, &#x27;paraphrase_vector_strict_win&#x27;: False, &#x27;exact_bm25_tied_or_best&#x27;: True}
+
+nfc_punctuation BM25 / Vector / Hybrid
+
+  overall 82.8% / 73.2% / 79.6%
+  exact        100.0% / 88.7% / 100.0%
+  paraphrase   42.7% / 24.0% / 32.0%
+  mixed        100.0% / 98.5% / 100.0%
+  criteria {&#x27;overall_hybrid_strict_win&#x27;: False, &#x27;mixed_hybrid_strict_win&#x27;: False, &#x27;paraphrase_vector_strict_win&#x27;: False, &#x27;exact_bm25_tied_or_best&#x27;: True}
+
+instruction_and_nfc BM25 / Vector / Hybrid
+
+  overall 82.8% / 73.6% / 80.4%
+  exact        100.0% / 86.7% / 100.0%
+  paraphrase   42.7% / 25.3% / 34.7%
+  mixed        100.0% / 100.0% / 100.0%
+  criteria {&#x27;overall_hybrid_strict_win&#x27;: False, &#x27;mixed_hybrid_strict_win&#x27;: False, &#x27;paraphrase_vector_strict_win&#x27;: False, &#x27;exact_bm25_tied_or_best&#x27;: True}
+
+No candidate is automatically adopted. Failures remain visible; no held-out generalization claim.
+BGE required configuration rubric status: {&#x27;overall_hybrid_strict_win&#x27;: True, &#x27;mixed_hybrid_strict_win&#x27;: True, &#x27;paraphrase_vector_strict_win&#x27;: False, &#x27;exact_bm25_tied_or_best&#x27;: True}
+UNMET — vector does not win paraphrase; the 5-point slice criterion remains incomplete.
+Baseline retained; alternative configurations are diagnostics, not a combined submission result.
+</pre></section></html>

@@ -1,0 +1,124 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>Lab 19 evidence</title><style>body{font-family:Arial,sans-serif;margin:24px;color:#152338;background:#f4f6f9}section{background:white;border:1px solid #b8c1cc;padding:16px;margin:20px 0;scroll-margin-top:12px}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}h1{font-size:24px}h2{font-size:18px}summary{cursor:pointer;color:#47586e}</style><h1>Lab 19 · 06_agent_retrieval</h1><p>Output notebook đã thực thi; trang HTML chuẩn bị để chụp trực tiếp trong trình duyệt. Trang này chưa phải screenshot. NB2 chưa đạt Vector thắng paraphrase.</p><p>Notebook: submission/runs/20261005T040443Z_reproduction_7d5aac/notebooks/20261005T041234Z_30d889/06_agent_retrieval.ipynb<br>SHA-256: 6782abead8376e67026c0ad0d2e028d6712a2a7694eb0d082545c231c0a38b31</p><nav><ul><li><a href="#cell-3">1. Tool definition — thứ agent thực sự nhìn thấy · Out[2]</a></li><li><a href="#cell-7">2. Planner: một câu hỏi, mấy ý định? · Out[4]</a></li><li><a href="#cell-9">3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất** · Out[5]</a></li><li><a href="#cell-12">4. Reflection: filter tồi còn tệ hơn không filter · Out[6]</a></li><li><a href="#cell-14">5. Ghép ngữ cảnh: nơi feature store gặp vector store · Out[7]</a></li></ul></nav><section id="cell-3"><h2>1. Tool definition — thứ agent thực sự nhìn thấy · Out[2]</h2><details><summary>Code nguồn</summary><pre>print(json.dumps(SEARCH_TOOL, ensure_ascii=False, indent=2)[:900])</pre></details><pre>{
+  &quot;name&quot;: &quot;search_docs&quot;,
+  &quot;description&quot;: &quot;Search the internal Vietnamese technical documentation corpus. Covers cloud, ai_ml, security, database, networking, devops, mobile, frontend, backend and data_eng. Ask ONE question per call. Returns ranked document chunks with doc_id, title and score.&quot;,
+  &quot;input_schema&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;query&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;One single-intent question.&quot;
+      },
+      &quot;topic&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;Restrict to one topic cluster.&quot;,
+        &quot;enum&quot;: [
+          &quot;cloud&quot;,
+          &quot;ai_ml&quot;,
+          &quot;security&quot;,
+          &quot;database&quot;,
+          &quot;networking&quot;,
+          &quot;devops&quot;,
+          &quot;mobile&quot;,
+          &quot;frontend&quot;,
+          &quot;backend&quot;,
+          &quot;data_eng&quot;
+        ]
+      },
+      &quot;since_year&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;description&quot;: &quot;Only docs publ
+</pre></section><section id="cell-7"><h2>2. Planner: một câu hỏi, mấy ý định? · Out[4]</h2><details><summary>Code nguồn</summary><pre>planner = RuleBasedPlanner(budget=16)
+demo_q = &quot;tự động mở rộng theo lưu lượng và cân bằng tải giữa nhiều region&quot;
+for i, args in enumerate(planner.plan(demo_q), 1):
+    print(f&quot;  call {i}: {args.as_dict()}&quot;)</pre></details><pre>  call 1: {&#x27;query&#x27;: &#x27;tự động mở rộng theo lưu lượng&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;cloud&#x27;}
+  call 2: {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;networking&#x27;}
+</pre></section><section id="cell-9"><h2>3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất** · Out[5]</h2><details><summary>Code nguồn</summary><pre>queries = [json.loads(l) for l in (DATA / &quot;agent_queries.jsonl&quot;).open(encoding=&quot;utf-8&quot;)]
+BUDGET = 16
+
+
+def evaluate(agent, label):
+    rec, bal, calls, ms = [], [], [], []
+    for q in queries:
+        plan = agent.planner.plan(q[&quot;question&quot;])
+        assert sum(args.top_k for args in plan) == BUDGET
+        r = agent.answer(q[&quot;question&quot;])
+        assert sum(len(c.doc_ids) for c in r.trace) &lt;= BUDGET
+        truth, got = set(q[&quot;relevant_doc_ids&quot;]), set(r.doc_ids)
+        rec.append(len(truth &amp; got) / len(truth))
+        a, b = len(set(q[&quot;gold_a&quot;]) &amp; got), len(set(q[&quot;gold_b&quot;]) &amp; got)
+        bal.append(min(a, b) / max(1, max(a, b)))
+        calls.append(r.n_calls)
+        ms.append(r.latency_ms)
+    n = len(queries)
+    print(f&quot;{label:&lt;14}{sum(rec)/n:8.3f}{sum(bal)/n:9.2f}{sum(calls)/n:8.1f}{sum(ms)/n:9.1f}&quot;)
+    return {&quot;recall&quot;: sum(rec) / n, &quot;balance&quot;: sum(bal) / n}
+
+
+print(f&quot;{&#x27;strategy&#x27;:&lt;20}{&#x27;recall&#x27;:&gt;8}{&#x27;balance&#x27;:&gt;9}{&#x27;calls&#x27;:&gt;8}{&#x27;ms&#x27;:&gt;9}&quot;)
+base = evaluate(Agent(tool, SingleShotPlanner(budget=BUDGET)), &quot;single-shot&quot;)
+split = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=False)),
+                 &quot;agentic (no filter)&quot;)
+filt = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=True)),
+                &quot;agentic (+filter)&quot;)
+print(f&quot;\nΔ recall vs single-shot:  tách câu {split[&#x27;recall&#x27;] - base[&#x27;recall&#x27;]:+.3f}   &quot;
+      f&quot;tách + filter {filt[&#x27;recall&#x27;] - base[&#x27;recall&#x27;]:+.3f}&quot;)
+assert split[&quot;recall&quot;] &gt; base[&quot;recall&quot;]
+assert split[&quot;balance&quot;] &gt; base[&quot;balance&quot;]
+assert split[&quot;recall&quot;] &gt; filt[&quot;recall&quot;]
+print(&quot;PASS — agentic improves recall and balance at the same 16-document retrieval budget&quot;)</pre></details><pre>strategy              recall  balance   calls       ms
+
+single-shot      0.526     0.08     1.0     21.2
+
+agentic (no filter)   0.922     0.92     2.3     32.3
+
+agentic (+filter)   0.839     0.75     2.3     52.9
+
+Δ recall vs single-shot:  tách câu +0.396   tách + filter +0.312
+PASS — agentic improves recall and balance at the same 16-document retrieval budget
+</pre></section><section id="cell-12"><h2>4. Reflection: filter tồi còn tệ hơn không filter · Out[6]</h2><details><summary>Code nguồn</summary><pre>from app.agent import ToolArgs  # noqa: E402
+
+Q = &quot;cân bằng tải giữa nhiều region&quot;
+
+starving = ToolArgs(query=Q, topic=&quot;networking&quot;, since_year=2027, top_k=8)
+print(&quot;filter quá chặt (since_year=2027) →&quot;, len(tool(starving).doc_ids), &quot;kết quả&quot;)
+
+sane = ToolArgs(query=Q, topic=&quot;networking&quot;, top_k=8)
+print(&quot;filter hợp lý                     →&quot;, len(tool(sane).doc_ids), &quot;kết quả&quot;)
+
+
+class StarvingPlanner:
+    &quot;&quot;&quot;Cố tình sinh ra một filter không khớp gì, để xem agent xử lý thế nào.&quot;&quot;&quot;
+
+    def plan(self, question):
+        return [ToolArgs(query=question, topic=&quot;networking&quot;, since_year=2027, top_k=8)]
+
+
+res = Agent(tool, StarvingPlanner(), min_evidence=4).answer(Q)
+print(f&quot;\nagent phản tỉnh: {res.n_calls} call → {len(res.doc_ids)} doc&quot;)
+for c in res.trace:
+    print(&quot;   &quot;, c.args, &quot;→&quot;, len(c.doc_ids), &quot;kết quả&quot;)</pre></details><pre>filter quá chặt (since_year=2027) → 0 kết quả
+filter hợp lý                     → 8 kết quả
+
+agent phản tỉnh: 2 call → 8 doc
+    {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;networking&#x27;, &#x27;since_year&#x27;: 2027} → 0 kết quả
+    {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8} → 8 kết quả
+</pre></section><section id="cell-14"><h2>5. Ghép ngữ cảnh: nơi feature store gặp vector store · Out[7]</h2><details><summary>Code nguồn</summary><pre>store = None
+try:
+    from feast import FeatureStore
+    repo = Path(_setup.__file__).resolve().parent.parent / &quot;app&quot; / &quot;feast_repo&quot;
+    if (repo / &quot;registry.db&quot;).exists():
+        store = FeatureStore(repo_path=str(repo))
+except Exception as exc:  # noqa: BLE001
+    print(&quot;Feast chưa sẵn sàng:&quot;, exc)
+
+ctx = build_context(&quot;u_001&quot;, &quot;làm sao tối ưu chi phí hạ tầng&quot;, tool, feature_store=store)
+print(&quot;features   :&quot;, ctx[&quot;features&quot;] or &quot;(chưa có — chạy NB4 trước)&quot;)
+print(&quot;affinity   :&quot;, ctx[&quot;affinity_used&quot;])
+print(&quot;tool_args  :&quot;, ctx[&quot;tool_args&quot;])
+print(&quot;doc_ids    :&quot;, ctx[&quot;doc_ids&quot;][:5], &quot;…&quot;)
+assert ctx[&quot;features&quot;].get(&quot;topic_affinity&quot;) == [&quot;cloud&quot;], &quot;Run NB4 first for real Feast features&quot;
+assert ctx[&quot;doc_ids&quot;]</pre></details><pre>features   : {&#x27;user_id&#x27;: [&#x27;u_001&#x27;], &#x27;topic_affinity&#x27;: [&#x27;cloud&#x27;], &#x27;preferred_language&#x27;: [&#x27;vi&#x27;]}
+affinity   : cloud
+tool_args  : {&#x27;query&#x27;: &#x27;làm sao tối ưu chi phí hạ tầng&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;cloud&#x27;}
+doc_ids    : [&#x27;cloud_066&#x27;, &#x27;cloud_065&#x27;, &#x27;cloud_062&#x27;, &#x27;cloud_004&#x27;, &#x27;cloud_088&#x27;] …
+</pre></section></html>

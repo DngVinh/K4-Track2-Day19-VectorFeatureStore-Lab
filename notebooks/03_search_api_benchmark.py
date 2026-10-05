@@ -15,7 +15,10 @@
 
 # %%
 import _setup  # noqa: F401
+import json
 import statistics
+import socket
+import sys
 import subprocess
 import time
 from pathlib import Path
@@ -30,14 +33,20 @@ import httpx
 
 # %%
 ROOT = Path(_setup.__file__).resolve().parent.parent
+with socket.socket() as available:
+    available.bind(("127.0.0.1", 0))
+    PORT = available.getsockname()[1]
 proc = subprocess.Popen(
-    ["uvicorn", "app.main:app", "--port", "8000", "--log-level", "warning"],
+    [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1",
+     "--port", str(PORT), "--log-level", "warning"],
     cwd=str(ROOT),
 )
 
 # Đợi server up + warm (Searcher.from_corpus loads embeddings + indexes 1000 docs)
-URL = "http://localhost:8000"
-for _ in range(60):
+URL = f"http://127.0.0.1:{PORT}"
+for _ in range(180):
+    if proc.poll() is not None:
+        raise RuntimeError("Lab API process exited before readiness")
     try:
         r = httpx.get(f"{URL}/healthz", timeout=2.0)
         if r.status_code == 200 and r.json().get("ready"):
@@ -46,7 +55,8 @@ for _ in range(60):
         pass
     time.sleep(1)
 else:
-    raise RuntimeError("API didn't become ready within 60s")
+    proc.terminate()
+    raise RuntimeError("API didn't become ready within 180s")
 
 print(httpx.get(f"{URL}/healthz").json())
 
@@ -57,6 +67,9 @@ print(httpx.get(f"{URL}/healthz").json())
 r = httpx.get(f"{URL}/search", params={"q": "cloud computing tự động mở rộng", "mode": "hybrid"})
 r.raise_for_status()
 body = r.json()
+from app.main import SearchResponse
+SearchResponse.model_validate(body)
+print(json.dumps(body, ensure_ascii=False, indent=2))
 print(f"latency_ms: {body['latency_ms']:.1f}")
 print(f"top-3 hits:")
 for h in body["hits"][:3]:
@@ -76,6 +89,13 @@ import json
 
 DATA = ROOT / "data"
 golden = [json.loads(l) for l in (DATA / "golden_set.jsonl").open(encoding="utf-8")]
+assert len(golden) == 50
+http = httpx.Client(base_url=URL, timeout=30)
+for mode in ("keyword", "semantic", "hybrid"):
+    for q in golden[:10]:
+        response = http.get("/search", params={"q": q["query"], "mode": mode})
+        response.raise_for_status()
+print("Warmup completed: 10 requests per mode (excluded from measurements)")
 
 
 def percentile(values: list[float], p: float) -> float:
@@ -91,7 +111,9 @@ def benchmark_mode(mode: str, reps: int = 2) -> dict[str, float]:
     for _ in range(reps):
         for q in golden:
             t0 = time.perf_counter()
-            r = httpx.get(f"{URL}/search", params={"q": q["query"], "mode": mode})
+            r = http.get("/search", params={"q": q["query"], "mode": mode})
+            r.raise_for_status()
+            SearchResponse.model_validate(r.json())
             wall_latencies.append((time.perf_counter() - t0) * 1000)
             server_latencies.append(r.json()["latency_ms"])
     return {
@@ -129,7 +151,9 @@ else:
 # %%
 proc.terminate()
 proc.wait(timeout=5)
+http.close()
 print("API server stopped")
+assert hybrid_p99 < 50, f"Hybrid P99 {hybrid_p99:.2f}ms exceeds 50ms"
 
 # %% [markdown]
 # ## Deliverable evidence

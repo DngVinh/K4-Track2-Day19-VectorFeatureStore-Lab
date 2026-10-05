@@ -1,0 +1,4 @@
+Day 19 lite smoke test
+  • fastembed loads + embeds (BAAI/bge-small-en-v1.5)
+
+Smoke test FAILED: ModuleNotFoundError: No module named 'fastembed'

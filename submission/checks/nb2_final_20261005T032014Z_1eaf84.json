@@ -1,0 +1,10 @@
+{
+  "command": [
+    "C:\\Users\\Duong Vinh\\K4-Track2-Day19-VectorFeatureStore-Lab\\.venv\\Scripts\\python.exe",
+    "scripts/run_notebooks.py",
+    "02"
+  ],
+  "started_utc": "2026-10-05T03:20:14.438369+00:00",
+  "finished_utc": "2026-10-05T03:23:33.445314+00:00",
+  "exit_code": 0
+}

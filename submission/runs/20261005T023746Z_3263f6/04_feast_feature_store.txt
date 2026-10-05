@@ -1,0 +1,58 @@
+Wrote 3 Parquet sources to C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\app\feast_repo\data
+  item_popularity.parquet  12.0 KB
+  query_velocity.parquet  2.3 KB
+  user_profile.parquet  2.7 KB
+
+[31m---------------------------------------------------------------------------[39m
+[31mOSError[39m                                   Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[3][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m res = subprocess.run(
+[32m      2[39m     [[33m"feast"[39m, [33m"apply"[39m],
+[32m      3[39m     cwd=str(FEAST_DIR),
+[32m      4[39m     capture_output=[38;5;28;01mTrue[39;00m, text=[38;5;28;01mTrue[39;00m, check=[38;5;28;01mFalse[39;00m,
+
+[36mFile [39m[32mC:\Python314\Lib\subprocess.py:555[39m, in [36mrun[39m[34m(input, capture_output, timeout, check, *popenargs, **kwargs)[39m
+[32m    552[39m     kwargs[[33m'[39m[33mstdout[39m[33m'[39m] = PIPE
+[32m    553[39m     kwargs[[33m'[39m[33mstderr[39m[33m'[39m] = PIPE
+[32m--> [39m[32m555[39m [38;5;28;01mwith[39;00m [30;43mPopen[39;49m[30;43m([39;49m[30;43m*[39;49m[30;43mpopenargs[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43m*[39;49m[30;43m*[39;49m[30;43mkwargs[39;49m[30;43m)[39;49m [38;5;28;01mas[39;00m process:
+[32m    556[39m     [38;5;28;01mtry[39;00m:
+[32m    557[39m         stdout, stderr = process.communicate([38;5;28minput[39m, timeout=timeout)
+
+[36mFile [39m[32mC:\Python314\Lib\subprocess.py:1039[39m, in [36mPopen.__init__[39m[34m(self, args, bufsize, executable, stdin, stdout, stderr, preexec_fn, close_fds, shell, cwd, env, universal_newlines, startupinfo, creationflags, restore_signals, start_new_session, pass_fds, user, group, extra_groups, encoding, errors, text, umask, pipesize, process_group)[39m
+[32m   1035[39m         [38;5;28;01mif[39;00m [38;5;28mself[39m.text_mode:
+[32m   1036[39m             [38;5;28mself[39m.stderr = io.TextIOWrapper([38;5;28mself[39m.stderr,
+[32m   1037[39m                     encoding=encoding, errors=errors)
+[32m-> [39m[32m1039[39m     [30;43mself[39;49m[30;43m.[39;49m[30;43m_execute_child[39;49m[30;43m([39;49m[30;43margs[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mexecutable[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mpreexec_fn[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mclose_fds[39;49m[30;43m,[39;49m
+[32m   1040[39m [30;43m                        [39;49m[30;43mpass_fds[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mcwd[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43menv[39;49m[30;43m,[39;49m
+[32m   1041[39m [30;43m                        [39;49m[30;43mstartupinfo[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mcreationflags[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mshell[39;49m[30;43m,[39;49m
+[32m   1042[39m [30;43m                        [39;49m[30;43mp2cread[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mp2cwrite[39;49m[30;43m,[39;49m
+[32m   1043[39m [30;43m                        [39;49m[30;43mc2pread[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mc2pwrite[39;49m[30;43m,[39;49m
+[32m   1044[39m [30;43m                        [39;49m[30;43merrread[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43merrwrite[39;49m[30;43m,[39;49m
+[32m   1045[39m [30;43m                        [39;49m[30;43mrestore_signals[39;49m[30;43m,[39;49m
+[32m   1046[39m [30;43m                        [39;49m[30;43mgid[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mgids[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43muid[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mumask[39;49m[30;43m,[39;49m
+[32m   1047[39m [30;43m                        [39;49m[30;43mstart_new_session[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mprocess_group[39;49m[30;43m)[39;49m
+[32m   1048[39m [38;5;28;01mexcept[39;00m:
+[32m   1049[39m     [38;5;66;03m# Cleanup if the child failed starting.[39;00m
+[32m   1050[39m     [38;5;28;01mfor[39;00m f [38;5;129;01min[39;00m [38;5;28mfilter[39m([38;5;28;01mNone[39;00m, ([38;5;28mself[39m.stdin, [38;5;28mself[39m.stdout, [38;5;28mself[39m.stderr)):
+
+[36mFile [39m[32mC:\Python314\Lib\subprocess.py:1553[39m, in [36mPopen._execute_child[39m[34m(self, args, executable, preexec_fn, close_fds, pass_fds, cwd, env, startupinfo, creationflags, shell, p2cread, p2cwrite, c2pread, c2pwrite, errread, errwrite, unused_restore_signals, unused_gid, unused_gids, unused_uid, unused_umask, unused_start_new_session, unused_process_group)[39m
+[32m   1551[39m [38;5;66;03m# Start the process[39;00m
+[32m   1552[39m [38;5;28;01mtry[39;00m:
+[32m-> [39m[32m1553[39m     hp, ht, pid, tid = [30;43m_winapi[39;49m[30;43m.[39;49m[30;43mCreateProcess[39;49m[30;43m([39;49m[30;43mexecutable[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43margs[39;49m[30;43m,[39;49m
+[32m   1554[39m [30;43m                             [39;49m[30;43;03m# no special security[39;49;00m
+[32m   1555[39m [30;43m                             [39;49m[30;43;01mNone[39;49;00m[30;43m,[39;49m[30;43m [39;49m[30;43;01mNone[39;49;00m[30;43m,[39;49m
+[32m   1556[39m [30;43m                             [39;49m[30;43mint[39;49m[30;43m([39;49m[30;43;01mnot[39;49;00m[30;43m [39;49m[30;43mclose_fds[39;49m[30;43m)[39;49m[30;43m,[39;49m
+[32m   1557[39m [30;43m                             [39;49m[30;43mcreationflags[39;49m[30;43m,[39;49m
+[32m   1558[39m [30;43m                             [39;49m[30;43menv[39;49m[30;43m,[39;49m
+[32m   1559[39m [30;43m                             [39;49m[30;43mcwd[39;49m[30;43m,[39;49m
+[32m   1560[39m [30;43m                             [39;49m[30;43mstartupinfo[39;49m[30;43m)[39;49m
+[32m   1561[39m [38;5;28;01mfinally[39;00m:
+[32m   1562[39m     [38;5;66;03m# Child is launched. Close the parent's copy of those pipe[39;00m
+[32m   1563[39m     [38;5;66;03m# handles that only the child should have open.  You need[39;00m
+[32m   (...)[39m[32m   1566[39m     [38;5;66;03m# pipe will not close when the child process exits and the[39;00m
+[32m   1567[39m     [38;5;66;03m# ReadFile will hang.[39;00m
+[32m   1568[39m     [38;5;28mself[39m._close_pipe_fds(p2cread, p2cwrite,
+[32m   1569[39m                          c2pread, c2pwrite,
+[32m   1570[39m                          errread, errwrite)
+
+[31mOSError[39m: [WinError 4551] An Application Control policy has blocked this file

@@ -1,0 +1,7 @@
+Executing 02_hybrid_search_rrf.py
+Preserved existing 02_hybrid_search_rrf.ipynb; fresh outputs are in C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\submission\runs\20261005T032016Z_527f26\02_hybrid_search_rrf.ipynb
+PASS 02_hybrid_search_rrf.py
+Evidence: C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\submission\runs\20261005T032016Z_527f26
+
+STDERR:
+[IPKernelApp] WARNING | Kernel is running over TCP without encryption. All communication (including code and outputs) is sent in plain text and is susceptible to eavesdropping. Use IPC transport or launch with kernel manager-provisioned CurveZMQ keys to enable transport encryption.

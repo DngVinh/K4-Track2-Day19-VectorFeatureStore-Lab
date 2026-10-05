@@ -1,0 +1,22 @@
+PASS 01_embeddings_index.ipynb: 7 executed code cells, no errors
+PASS 02_hybrid_search_rrf.ipynb: 9 executed code cells, no errors
+PASS 03_search_api_benchmark.ipynb: 6 executed code cells, no errors
+PASS 04_feast_feature_store.ipynb: 7 executed code cells, no errors
+PASS 05_filtered_search.ipynb: 5 executed code cells, no errors
+PASS 06_agent_retrieval.ipynb: 7 executed code cells, no errors
+PASS 07_semantic_cache.ipynb: 5 executed code cells, no errors
+PASS 08_feature_engineering.ipynb: 9 executed code cells, no errors
+PASS — notebook/source equality, eight legacy PNG renderings, architecture, reflection and data counts
+Manual window screenshot files present: 0/8; legacy PNG renders do not satisfy this check
+Screenshot provenance/content must be reviewed manually; file presence does not prove a UI capture
+NB2 slice criterion is incomplete; artifact checks do not award rubric points
+
+STDERR:
+Traceback (most recent call last):
+  File "C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\scripts\check_submission.py", line 82, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Duong Vinh\K4-Track2-Day19-VectorFeatureStore-Lab\scripts\check_submission.py", line 74, in main
+    assert len(present) == 8, "Browser/window screenshots pending; see submission/screenshots/MANUAL_CAPTURE.md"
+           ^^^^^^^^^^^^^^^^^
+AssertionError: Browser/window screenshots pending; see submission/screenshots/MANUAL_CAPTURE.md

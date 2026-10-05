@@ -1,0 +1,63 @@
+ M .gitignore
+ M Makefile
+ M README.md
+ M app/agent.py
+ M app/cache.py
+ M app/features.py
+ M app/filters.py
+ M app/search.py
+ M notebooks/01_embeddings_index.py
+ M notebooks/02_hybrid_search_rrf.py
+ M notebooks/03_search_api_benchmark.py
+ M notebooks/04_feast_feature_store.py
+ M notebooks/05_filtered_search.py
+ M notebooks/06_agent_retrieval.py
+ M notebooks/07_semantic_cache.py
+ M notebooks/08_feature_engineering.py
+ M notebooks/_setup.py
+ M pyproject.toml
+ M requirements.txt
+ M scripts/benchmark.py
+ M setup-lite.sh
+ M submission/REFLECTION.md
+?? bonus/
+?? notebooks/01_embeddings_index.ipynb
+?? notebooks/02_hybrid_search_rrf.ipynb
+?? notebooks/03_search_api_benchmark.ipynb
+?? notebooks/04_feast_feature_store.ipynb
+?? notebooks/05_filtered_search.ipynb
+?? notebooks/06_agent_retrieval.ipynb
+?? notebooks/07_semantic_cache.ipynb
+?? notebooks/08_feature_engineering.ipynb
+?? scripts/audit_search.py
+?? scripts/capture_evidence.py
+?? scripts/check_submission.py
+?? scripts/fetch_lite_model.py
+?? scripts/portable_make.py
+?? scripts/record_check.py
+?? scripts/run_notebooks.py
+?? scripts/verify_reproduction.py
+?? setup-windows.ps1
+?? submission/VALIDATION.md
+?? submission/bonus_demo.txt
+?? submission/checks/
+?? submission/environment.json
+?? submission/runs/
+?? submission/screenshots/capture_manifest.json
+?? submission/screenshots/nb1_indexed_1000.html
+?? submission/screenshots/nb1_indexed_1000.png
+?? submission/screenshots/nb2_precision_table.html
+?? submission/screenshots/nb2_precision_table.png
+?? submission/screenshots/nb3_latency_p99.html
+?? submission/screenshots/nb3_latency_p99.png
+?? submission/screenshots/nb4_feast_materialize.html
+?? submission/screenshots/nb4_feast_materialize.png
+?? submission/screenshots/nb5_filtered_search.html
+?? submission/screenshots/nb5_filtered_search.png
+?? submission/screenshots/nb6_agent_retrieval.html
+?? submission/screenshots/nb6_agent_retrieval.png
+?? submission/screenshots/nb7_semantic_cache.html
+?? submission/screenshots/nb7_semantic_cache.png
+?? submission/screenshots/nb8_feature_engineering.html
+?? submission/screenshots/nb8_feature_engineering.png
+?? tests/test_submission_contracts.py

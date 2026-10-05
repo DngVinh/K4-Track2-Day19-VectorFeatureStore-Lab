@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><title>Lab 19 screenshot evidence</title><style>body{font:16px Arial;margin:24px}pre{white-space:pre-wrap;font:16px/1.5 Consolas}section{border:1px solid #ccc;padding:18px;margin:18px 0}</style><h1>05_filtered_search</h1><p>Final executed output excerpts. Rendered evidence accepted by the user as submission screenshots.</p><section><h2>Output [2]</h2><pre>docs: 1000   vectors: (1000, 384)
+payload mẫu: {&#x27;doc_id&#x27;: &#x27;frontend_074&#x27;, &#x27;topic&#x27;: &#x27;frontend&#x27;, &#x27;tenant&#x27;: &#x27;globex&#x27;, &#x27;access&#x27;: &#x27;public&#x27;, &#x27;published&#x27;: &#x27;2023-11-04&#x27;}</pre></section><section><h2>Output [3]</h2><pre>filter               sel%    post    fANN  post_ms  fann_ms
+không filter        100.0    1.00    1.00      2.8      nan
+access=internal      23.6    0.20    1.00      2.4     11.3
+tenant=acme          31.9    0.20    1.00      2.5     10.5
+published ≥ 2026     13.5    0.20    1.00      2.6     11.2
+
+acme AND ≥2026        3.8    0.00    1.00      2.8     12.4
+PASS — filtered retrieval preserves exact recall; selective post-filter loses recall</pre></section><section><h2>Output [4]</h2><pre>selectivity = 3.8%  của 1000 doc
+
+  fetch_k   recall   % corpus quét
+       10     0.03              1%
+       50     0.27              5%
+      200     0.80             20%
+
+      500     1.00             50%
+
+     1000     1.00            100%
+     fANN     1.00              1%</pre></section><section><h2>Output [5]</h2><pre>tenant=acme      sel= 31.9%  post=0.20  fANN=1.00
+
+tenant=globex    sel= 34.7%  post=0.60  fANN=1.00
+
+tenant=initech   sel= 33.4%  post=0.20  fANN=1.00</pre></section>
